@@ -7974,24 +7974,37 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V13 (VERSION FINALE TOTALE) 🔥
--- TOUT EST CONSERVÉ - AUCUNE SUPPRESSION - OBFUSCATOR SAFE
+-- 🔥 SCRULI HUB - LAVA EDITION V13.1 (FINAL VERSION) 🔥
+-- EVERYTHING KEPT - MOBILE KEYBIND FIX + RAKNET SAVE + LOG
 -- ==========================================================
 task.spawn(function()
+    local currentVersion = "V13.1" -- Change this to V14 later to force the Update Log to show
+
+    -- 🎵 SATISFYING STARTUP SOUND
+    local function PlayStartupSound()
+        local sound = Instance.new("Sound", workspace)
+        sound.SoundId = "rbxassetid://4590657391" -- Clear and satisfying UI sound
+        sound.Volume = 1.5
+        sound:Play()
+        task.delay(3, function() sound:Destroy() end)
+    end
+    PlayStartupSound()
+
     local HttpService = game:GetService("HttpService")
     local saveFile = "ScruliLava_SaveState.json"
 
-    -- ⏳ ATTENTE DE LETHAL HUB
+    -- ⏳ WAITING FOR MAIN HUB
     local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local timeout = 30; local elapsed = 0
     while not PlayerGui:FindFirstChild("AutoStealUI") and elapsed < timeout do
         task.wait(0.5); elapsed = elapsed + 0.5
     end
 
-    -- 💾 CHARGEMENT DES SAUVEGARDES
+    -- 💾 LOADING SAVES (WITH RAKNET AND VERSION)
     local function LoadState()
         local defaultState = { 
             Main = false, Speed = false, Steal = false, Admin = false, Priority = false, Invis = false, DesyncPanel = false, MobileShow = true,
+            RHActive = false, RDActive = false, LastVersion = "V0", -- Saves
             Keys = { TP = "T", Clone = "V", Carpet = "Q", Kick = "K", Reset = "R", MenuToggle = "RightShift", Desync = "Z" }
         }
         if readfile and isfile and isfile(saveFile) then
@@ -7999,6 +8012,9 @@ task.spawn(function()
             if ok and type(data) == "table" then 
                 if data.Keys then for k, v in pairs(data.Keys) do defaultState.Keys[k] = v end end
                 if data.MobileShow ~= nil then defaultState.MobileShow = data.MobileShow end
+                if data.RHActive ~= nil then defaultState.RHActive = data.RHActive end
+                if data.RDActive ~= nil then defaultState.RDActive = data.RDActive end
+                if data.LastVersion ~= nil then defaultState.LastVersion = data.LastVersion end
                 data.Keys = defaultState.Keys
                 return data 
             end
@@ -8050,23 +8066,51 @@ task.spawn(function()
         grad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Core.Theme.FireRed), ColorSequenceKeypoint.new(0.5, Core.Theme.Ember), ColorSequenceKeypoint.new(1, Core.Theme.FireRed)}
         grad.Rotation = rot or 45; return grad
     end
-
-    -- FONCTION DE CLIC UNIVERSELLE (Placée en haut pour le bouton TP Mobile)
-    local function Clk(orig) 
-        if not orig then return end
-        pcall(function()
-            if firesignal then
-                firesignal(orig.MouseButton1Down); task.wait(0.05); firesignal(orig.MouseButton1Up); firesignal(orig.MouseButton1Click)
-            else
-                local vim = game:GetService("VirtualInputManager"); local inset = game:GetService("GuiService"):GetGuiInset()
-                local pos = orig.AbsolutePosition + (orig.AbsoluteSize / 2) + inset
-                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1); task.wait(0.05); vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
-            end
-        end)
-    end
     
     -- =========================================================
-    -- 🎨 NOTIFICATIONS SCRULI
+    -- 🤖 ULTRA-AGGRESSIVE CLICK
+    -- =========================================================
+    local function Clk(orig) 
+        if not orig then return end
+        task.spawn(function()
+            pcall(function()
+                if getconnections then
+                    for _, sig in ipairs({"MouseButton1Click", "MouseButton1Down", "MouseButton1Up", "Activated", "TouchTap"}) do
+                        pcall(function()
+                            for _, conn in ipairs(getconnections(orig[sig])) do conn.Function() end
+                        end)
+                    end
+                end
+                if firesignal then
+                    pcall(function() firesignal(orig.MouseButton1Down) end); task.wait(0.05)
+                    pcall(function() firesignal(orig.MouseButton1Up) end)
+                    pcall(function() firesignal(orig.MouseButton1Click) end)
+                end
+                local vim = game:GetService("VirtualInputManager")
+                local pos = orig.AbsolutePosition + (orig.AbsoluteSize / 2)
+                local inset = game:GetService("GuiService"):GetGuiInset()
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1); task.wait(0.05)
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
+                vim:SendMouseButtonEvent(pos.X + inset.X, pos.Y + inset.Y, 0, true, game, 1); task.wait(0.05)
+                vim:SendMouseButtonEvent(pos.X + inset.X, pos.Y + inset.Y, 0, false, game, 1)
+            end)
+        end)
+    end
+
+    -- 🎹 KEYBOARD KEY SIMULATOR (FOR MOBILE PACK)
+    local function SimulateKey(keyString)
+        if not keyString then return end
+        local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
+        if success and keyCode then
+            local vim = game:GetService("VirtualInputManager")
+            vim:SendKeyEvent(true, keyCode, false, game)
+            task.wait(0.05)
+            vim:SendKeyEvent(false, keyCode, false, game)
+        end
+    end
+
+    -- =========================================================
+    -- 🎨 SCRULI NOTIFICATIONS
     -- =========================================================
     local SG = Instance.new("ScreenGui", Core.Gui); SG.Name = "ScruliHub_UI"; SG.ResetOnSpawn = false
     local NotifContainer = Instance.new("Frame", SG); NotifContainer.Name = "ScruliNotifs";
@@ -8111,7 +8155,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🛡️ SYSTEME DE DESYNC STRICT & MOBILE FUNCTIONS
+    -- 🛡️ STRICT DESYNC SYSTEM & TP FUNCTIONS
     -- =========================================================
     _G.IsDesynced = false; _G.AutoDesyncOnLoad = true; _G.DesyncInProgress = false; local hooked = false
     
@@ -8136,15 +8180,18 @@ task.spawn(function()
         return false
     end
 
-    -- CORRECTIF V13 : Logique TP Mobile forcée
     local function tpToCloneMobile()
         local tools = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
         if tools and tools:FindFirstChild("QuantumCloner") then
-            local tpBtn = tools.QuantumCloner.TeleportToClone
-            tpBtn.Visible = true -- On force la visibilité au cas où Lethal Hub la cache
-            Clk(tpBtn) -- On utilise la fonction de clic universelle
+            local tpBtn = tools.QuantumCloner:FindFirstChild("TeleportToClone")
+            if tpBtn then
+                tpBtn.Visible = true
+                Clk(tpBtn) 
+            else
+                if _G.SendScruliNotif then _G.SendScruliNotif("⚠️ TP BUTTON NOT FOUND") end
+            end
         else
-            if _G.SendScruliNotif then _G.SendScruliNotif("⚠️ NO CLONE TO TP") end
+            if _G.SendScruliNotif then _G.SendScruliNotif("⚠️ NO CLONE ACTIVE") end
         end
     end
 
@@ -8169,7 +8216,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 📱 PACK MOBILE DÉPLAÇABLE (AJOUT V13)
+    -- 📱 DRAGGABLE MOBILE PACK
     -- =========================================================
     local MobileControls = Instance.new("Frame", SG)
     MobileControls.Name = "ScruliMobileButtons"; MobileControls.Size = UDim2.new(0, 60, 0, 180)
@@ -8178,12 +8225,12 @@ task.spawn(function()
     local function CreateMobBtn(txt, pos, color, callback)
         local b = Instance.new("TextButton", MobileControls); b.Size = UDim2.new(0, 50, 0, 50); b.Position = pos; b.BackgroundColor3 = color; b.Text = txt; b.Font = Enum.Font.GothamBlack; b.TextColor3 = Color3.new(1,1,1); b.TextSize = 10; Instance.new("UICorner", b).CornerRadius = UDim.new(1,0)
         local str = Instance.new("UIStroke", b); str.Color = Core.Theme.Stroke; str.Thickness = 2
-        b.MouseButton1Click:Connect(callback); return b
+        b.Activated:Connect(callback); return b
     end
 
-    local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() tpToCloneMobile() end)
-    local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() instantClone() end)
-    local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() if Core.Player.Character then Core.Player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 999999, 0) end end)
+    local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() SimulateKey(Core.Keys.TP) end)
+    local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() SimulateKey(Core.Keys.Clone) end)
+    local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() SimulateKey(Core.Keys.Reset) end)
 
     local dragM = false; local dragStartM; local startPosM
     mTP.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then dragM = true; dragStartM = i.Position; startPosM = MobileControls.Position end end)
@@ -8192,7 +8239,7 @@ task.spawn(function()
     end end)
     Core.UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then dragM = false end end)
 
-    -- 🔥 WATCHER ACTIF (DÉTECTION ULTRA RAPIDE DU CLONEUR POUR LE TP) 🔥
+    -- 🔥 ACTIVE WATCHER (CLONER DETECTION) 🔥
     task.spawn(function()
         while task.wait(0.05) do
             pcall(function()
@@ -8215,14 +8262,11 @@ task.spawn(function()
 
     Core.Player.CharacterAdded:Connect(function()
         _G.IsDesynced = false
-        if hooked then
-            pcall(function() raknet.remove_send_hook(rakhook) end)
-            hooked = false
-        end
+        if hooked then pcall(function() raknet.remove_send_hook(rakhook) end); hooked = false end
     end)
 
     -- =========================================================
-    -- 🔴 SYSTÈME SERVER POS
+    -- 🔴 SERVER POS SYSTEM
     -- =========================================================
     local ShowServerPos = true
     local ServerSphere, ServerBG, ServerText = nil, nil, nil
@@ -8261,7 +8305,7 @@ task.spawn(function()
     end)
 
     -- =========================================================
-    -- 🛑 NUKING OLD GUIS & INTERCEPTING LETHAL HUB NOTIFS
+    -- 🛑 NUKING OLD GUIS & INTERCEPTING MAIN HUB NOTIFS
     -- =========================================================
     local badGuis = {"StealSpeedUI", "AutoStealUI", "XiAdminPanel", "SettingsUI", "XiJobJoiner", "XiMobileControls", "XiStatusHUD"}
     
@@ -8292,7 +8336,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🔧 DRAG & CLIC & UI FUNCTIONS
+    -- 🔧 DRAG & UI FUNCTIONS
     -- =========================================================
     local function MakeDraggable(topbar, frame)
         local dragging, dragInput, dragStart, startPos
@@ -8371,7 +8415,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎨 THEME FORCÉ SUR INVIS ET PRIORITY
+    -- 🎨 FORCED THEME ON INVIS AND PRIORITY
     -- =========================================================
     task.spawn(function()
         while task.wait(0.5) do
@@ -8412,7 +8456,7 @@ task.spawn(function()
     end)
 
     -- =========================================================
-    -- 🎨 PANNEAUX PRINCIPAUX (PREMIUM DESIGN)
+    -- 🎨 MAIN PANELS (PREMIUM DESIGN)
     -- =========================================================
     local MainFrame = Instance.new("Frame", SG)
     MainFrame.Size = UDim2.new(0, 520, 0, 340); MainFrame.Position = UDim2.new(0.5, -260, 0.5, -170); MainFrame.BackgroundColor3 = Core.Theme.Obsidian; MainFrame.BackgroundTransparency = 0.15;
@@ -8446,9 +8490,80 @@ task.spawn(function()
     local UI = {}
     local function SaveState() 
         if not writefile then return end 
-        local st = { Main = MainFrame.Visible, Speed = SpeedPanel.Visible, Steal = ASPanel.Visible, Admin = AdminPanel.Visible, DesyncPanel = DesyncPanel.Visible, MobileShow = MobileControls.Visible, Keys = Core.Keys } 
+        local st = { 
+            Main = MainFrame.Visible, Speed = SpeedPanel.Visible, Steal = ASPanel.Visible, Admin = AdminPanel.Visible, DesyncPanel = DesyncPanel.Visible, MobileShow = MobileControls.Visible, 
+            RHActive = _G.RHActive, RDActive = _G.RDActive, LastVersion = currentVersion,
+            Keys = Core.Keys 
+        } 
         pcall(function() writefile(saveFile, HttpService:JSONEncode(st)) end) 
     end
+
+    -- =========================================================
+    -- 📜 NEW: SCRULI UPDATE LOG PANEL (HUB STYLE)
+    -- =========================================================
+    local UpdatePanel = Instance.new("Frame", SG)
+    UpdatePanel.Size = UDim2.new(0, 420, 0, 450); UpdatePanel.Position = UDim2.new(0.5, -210, 0.5, -225)
+    UpdatePanel.BackgroundColor3 = Core.Theme.Obsidian; UpdatePanel.BackgroundTransparency = 0.1
+    UpdatePanel.Visible = false; Instance.new("UICorner", UpdatePanel).CornerRadius = UDim.new(0, 10)
+    Instance.new("UIStroke", UpdatePanel).Color = Core.Theme.FireRed; AddDropShadow(UpdatePanel, 20)
+
+    local UTop = Instance.new("Frame", UpdatePanel)
+    UTop.Size = UDim2.new(1, 0, 0, 40); UTop.BackgroundColor3 = Core.Theme.Volcanic; Instance.new("UICorner", UTop).CornerRadius = UDim.new(0, 10)
+    local UTit = Instance.new("TextLabel", UTop)
+    UTit.Size = UDim2.new(1, -40, 1, 0); UTit.Position = UDim2.new(0, 15, 0, 0); UTit.BackgroundTransparency = 1
+    UTit.Text = "🔥 UPDATE LOG : " .. currentVersion .. " 🔥"; UTit.Font = Enum.Font.GothamBlack; UTit.TextColor3 = Core.Theme.LavaLight; UTit.TextSize = 16; UTit.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local UClose = Instance.new("TextButton", UTop)
+    UClose.Size = UDim2.new(0, 40, 0, 40); UClose.Position = UDim2.new(1, -40, 0, 0); UClose.BackgroundTransparency = 1
+    UClose.Text = "X"; UClose.Font = Enum.Font.GothamBold; UClose.TextColor3 = Core.Theme.Ash; UClose.TextSize = 16
+    UClose.MouseButton1Click:Connect(function() 
+        Core.Tween:Create(UpdatePanel, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        task.wait(0.3); UpdatePanel.Visible = false; SaveState()
+    end)
+    MakeDraggable(UTop, UpdatePanel)
+
+    local UCont = Instance.new("ScrollingFrame", UpdatePanel)
+    UCont.Size = UDim2.new(1, -20, 1, -60); UCont.Position = UDim2.new(0, 10, 0, 50); UCont.BackgroundTransparency = 1
+    UCont.ScrollBarThickness = 4; UCont.ScrollBarImageColor3 = Core.Theme.FireRed; UCont.BorderSizePixel = 0
+    local ULay = Instance.new("UIListLayout", UCont); ULay.Padding = UDim.new(0, 10); ULay.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local function AddUpdateItem(title, desc)
+        local c = Instance.new("Frame", UCont)
+        c.Size = UDim2.new(1, -10, 0, 65); c.BackgroundColor3 = Core.Theme.Volcanic; c.BackgroundTransparency = 0.2
+        Instance.new("UICorner", c).CornerRadius = UDim.new(0, 6)
+        local str = Instance.new("UIStroke", c); str.Color = Core.Theme.Stroke; str.Thickness = 1
+        
+        local strip = Instance.new("Frame", c); strip.Size = UDim2.new(0, 4, 1, 0); strip.BackgroundColor3 = Core.Theme.FireRed; strip.BorderSizePixel = 0
+        Instance.new("UICorner", strip).CornerRadius = UDim.new(0, 6)
+
+        local t = Instance.new("TextLabel", c)
+        t.Size = UDim2.new(1, -15, 0, 25); t.Position = UDim2.new(0, 10, 0, 5); t.BackgroundTransparency = 1
+        t.Text = title; t.Font = Enum.Font.GothamBlack; t.TextColor3 = Core.Theme.White; t.TextSize = 14; t.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local d = Instance.new("TextLabel", c)
+        d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1
+        d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
+    end
+
+    AddUpdateItem("📱 MOBILE KEYBINDS FIXED", "Mobile touch buttons simulate real keyboard inputs. Zero delay.")
+    AddUpdateItem("💾 RAKNET STATE SAVED", "Raknet (Hook & Desync) remembers its state on startup. No more clicking.")
+    AddUpdateItem("🎵 SATISFYING STARTUP", "A new clean UI sound plays when the Hub injects.")
+    AddUpdateItem("📜 UPDATE LOG PANEL", "This clean panel appears once for every new version.")
+
+    local function ShowUpdateLog()
+        UpdatePanel.Size = UDim2.new(0, 0, 0, 0); UpdatePanel.Visible = true
+        Core.Tween:Create(UpdatePanel, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 420, 0, 450)}):Play()
+    end
+
+    -- 🔴 VERSION CHECK
+    if initState.LastVersion ~= currentVersion then
+        task.delay(1, function() ShowUpdateLog() end)
+        initState.LastVersion = currentVersion
+    end
+
+    -- =========================================================
+    -- END UPDATE LOG
+    -- =========================================================
     
     function UI.CreateSyncToggle(parent, text, oldName) 
         local Frame = Instance.new("Frame", parent); Frame.Size = UDim2.new(1, -8, 0, 38); Frame.Position = UDim2.new(0, 4, 0, 0); Frame.BackgroundColor3 = Core.Theme.Volcanic;
@@ -8506,9 +8621,9 @@ task.spawn(function()
         end) 
     end
 
-    function UI.CreateButton(parent, text, callback) 
+    function UI.CreateButton(parent, text, callback, customColor) 
         local Btn = Instance.new("TextButton", parent);
-        Btn.Size = UDim2.new(1, -8, 0, 38); Btn.Position = UDim2.new(0, 4, 0, 0); Btn.BackgroundColor3 = Core.Theme.Volcanic;
+        Btn.Size = UDim2.new(1, -8, 0, 38); Btn.Position = UDim2.new(0, 4, 0, 0); Btn.BackgroundColor3 = customColor or Core.Theme.Volcanic;
         Btn.Text = "  " .. text; Btn.Font = Enum.Font.GothamBold; Btn.TextColor3 = Core.Theme.Ash; Btn.TextSize = 13; Btn.TextXAlignment = Enum.TextXAlignment.Left;
         Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
         local stroke = Instance.new("UIStroke", Btn); stroke.Color = Core.Theme.Stroke;
@@ -8616,7 +8731,7 @@ task.spawn(function()
     local PSet = UI.CreateTab("Settings")
 
     -- =========================================================
-    -- 🛡️ DESYNC PANEL FLOTTANT (CONSTRUCTION)
+    -- 🛡️ FLOATING DESYNC PANEL (CONSTRUCTION)
     -- =========================================================
     local DPTop = Instance.new("Frame", DesyncPanel)
     DPTop.Size = UDim2.new(1, 0, 0, 35);
@@ -8703,22 +8818,30 @@ task.spawn(function()
     _G.AutoSpeed15 = false
     CreateDPToggle(DPCont, "🏃 Auto Speed 15 (On Steal)", _G.AutoSpeed15, function(s) _G.AutoSpeed15 = s end)
 
-    -- INTEGRATION ONGLETS
+    -- TABS INTEGRATION
     local bFloat = UI.CreateButton(PDesync, "🛡️ Open Desync Panel", function() DesyncPanel.Visible = not DesyncPanel.Visible; SaveState() end)
     UI.CreateLocalToggle(PDesync, "Auto-Desync on Clone", _G.AutoDesyncOnLoad, function(state) _G.AutoDesyncOnLoad = state end)
     UI.CreateLocalToggle(PDesync, "Show Server Pos", ShowServerPos, function(state) ShowServerPos = state end)
 
-    -- AJOUT V13 : Boutons Raknet activables de force
-    _G.RHActive = false
+    -- ADDED V13: FORCED RAKNET BUTTONS
+    _G.RHActive = initState.RHActive or false
+    _G.RDActive = initState.RDActive or false
+
+    -- Auto activation on launch if it was ON
+    if _G.RHActive then pcall(function() raknet.hook(true) end) end
+    if _G.RDActive then pcall(function() raknet.desync(true) end) end
+
     local btnRH = UI.CreateButton(PDesync, "raknet.hook (Synapse Z)", function() 
         _G.RHActive = not _G.RHActive
         pcall(function() raknet.hook(_G.RHActive) end)
+        SaveState() 
         if _G.SendScruliNotif then _G.SendScruliNotif("RAKNET HOOK: " .. (_G.RHActive and "ON" or "OFF")) end
     end)
-    _G.RDActive = false
+    
     local btnRD = UI.CreateButton(PDesync, "raknet.desync (Delta)", function() 
         _G.RDActive = not _G.RDActive
         pcall(function() raknet.desync(_G.RDActive) end)
+        SaveState() 
         if _G.SendScruliNotif then _G.SendScruliNotif("RAKNET DESYNC: " .. (_G.RDActive and "ON" or "OFF")) end
     end)
 
@@ -8738,7 +8861,7 @@ task.spawn(function()
     UI.CreateButton(PSteal, "🎯 Open Priority List", function() local g = Core.Gui:FindFirstChild("PriorityListGUI"); if g then g.Enabled = not g.Enabled end end)
 
     UI.CreateSyncToggle(PTP, "Auto TP on Script Load", "Auto TP on Script Load")
-    UI.CreateSyncToggle(PTP, "Auto TP Back To Brainrot", "Auto TP on failed Steal") 
+    UI.CreateSyncToggle(PTP, "Auto TP Back To Target", "Auto TP on failed Steal") 
     UI.CreateSyncToggle(PTP, "Flying Carpet", "Flying Carpet")
     UI.CreateSyncToggle(PTP, "Santa's Sleigh", "Santa's Sleigh")
     UI.CreateSyncToggle(PTP, "Witch's Broom", "Witch's Broom")
@@ -8746,10 +8869,10 @@ task.spawn(function()
     UI.CreateButton(PTP, "TP Delay: 4 (Safest)", function() Core.FireSetting("4") end)
     
     UI.CreateSyncToggle(PVis, "Player ESP", "Player ESP")
-    UI.CreateSyncToggle(PVis, "Brainrot ESP", "Brainrot ESP")
+    UI.CreateSyncToggle(PVis, "Target ESP", "Brainrot ESP")
     UI.CreateSyncToggle(PVis, "Subspace Mine ESP", "Subspace Mine Esp")
     UI.CreateSyncToggle(PVis, "Duel Base ESP", "Duel Base ESP")
-    UI.CreateSyncToggle(PVis, "Tracer Best Brainrot", "Tracer Best Brainrot")
+    UI.CreateSyncToggle(PVis, "Tracer Best Target", "Tracer Best Brainrot")
     UI.CreateSyncToggle(PVis, "FPS Boost", "FPS Boost")
     
     UI.CreateSyncToggle(PMisc, "Anti-Bee & Anti-Disco", "BEE")
@@ -8758,11 +8881,13 @@ task.spawn(function()
     UI.CreateSyncToggle(PMisc, "Anti-Ragdoll V2", "V2")
     UI.CreateButton(PMisc, "Reset FOV", function() Core.FireSetting("Reset FOV") end)
 
+    -- ADDED UPDATE LOG BUTTON
+    UI.CreateButton(PSet, "📜 View Update Log", function() ShowUpdateLog() end, Core.Theme.FireRed)
+
     UI.CreateSyncToggle(PSet, "Auto Unlock HUD", "Auto Unlock")
     UI.CreateSyncToggle(PSet, "Auto Invis During Steal", "Auto Invis During Steal")
     UI.CreateSyncToggle(PSet, "Auto TP on Failed Steal", "Auto TP on Failed Steal")
     
-    -- AJOUT V13 : Bouton toggle Pack Mobile dans Settings
     UI.CreateLocalToggle(PSet, "Mobile Controls Pack", MobileControls.Visible, function(s) MobileControls.Visible = s; SaveState() end)
     
     UI.CreateKeybind(PSet, "Desync Bind", Core.Keys.Desync, nil, function(k) Core.Keys.Desync = k; SaveState() end)
@@ -8801,7 +8926,7 @@ task.spawn(function()
     PSteal.Visible = true
 
     -- =========================================================
-    -- ⚡ 7. TON CUSTOM SPEED HACK PANEL
+    -- ⚡ 7. CUSTOM SPEED HACK PANEL
     -- =========================================================
     local stealSpeedEnabled = false
     local STEAL_SPEED = 20
@@ -9362,7 +9487,7 @@ task.spawn(function()
     end)
 
     -- =========================================================
-    -- 🎨 ESP & TRACERS FIX (FORCÉ ET UNIVERSEL)
+    -- 🎨 ESP & TRACERS FIX (FORCED AND UNIVERSAL)
     -- =========================================================
     local validEspNames = {"esp", "marker", "brainrot", "subspace", "duel", "tracer", "xi"}
     local function isValidLethalHubObject(name)
