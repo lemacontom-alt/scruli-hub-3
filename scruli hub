@@ -7972,7 +7972,6 @@ task.spawn(function()
         idBox.Text = ""
     end)
 end)
-
 -- ==========================================================
 -- 🔥 SCRULI HUB - LAVA EDITION V13.2 (MOBILE & CLICK PATCHED) 🔥
 -- ==========================================================
@@ -8103,74 +8102,59 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ FIX MOBILE DÉFINITIF : Contournement intelligent des connexions et faux InputObject
+    -- ⚡ FIX ANTI-CRASH MOBILE : Suppression totale de keypress et firesignal
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
-        pcall(function()
-            if not isMobile then
-                -- PC : Le VirtualInputManager fonctionne parfaitement
-                local vim = game:GetService("VirtualInputManager")
-                vim:SendKeyEvent(true, keyCode, false, game)
-                task.wait(0.05)
-                vim:SendKeyEvent(false, keyCode, false, game)
-            else
-                -- MOBILE 1 : Méthode native des exécuteurs
-                if keypress and keyrelease then
-                    pcall(function() 
-                        keypress(keyCode.Value) 
-                        task.wait(0.05)
-                        keyrelease(keyCode.Value)
-                    end)
-                end
-                
-                -- Création d'un faux Input robuste
-                local fakeInput = {
-                    UserInputType = Enum.UserInputType.Keyboard,
-                    KeyCode = keyCode,
-                    UserInputState = Enum.UserInputState.Begin
-                }
-                -- Sécurité Anti-Crash
-                setmetatable(fakeInput, {
-                    __index = function(t, k)
-                        if type(k) == "string" and (k:find("Is") or k:find("Get")) then
-                            return function() return false end
+        task.spawn(function()
+            pcall(function()
+                if not isMobile then
+                    -- PC : Le VirtualInputManager fonctionne parfaitement
+                    local vim = game:GetService("VirtualInputManager")
+                    vim:SendKeyEvent(true, keyCode, false, game)
+                    task.wait(0.05)
+                    vim:SendKeyEvent(false, keyCode, false, game)
+                else
+                    -- MOBILE : Uniquement conn.Function (La méthode la plus sûre)
+                    if getconnections then
+                        local charKey = string.lower(keyString)
+                        
+                        -- A) Fausser la Souris (Lethal Hub écoute ça pour TP)
+                        if #charKey == 1 then
+                            for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
+                                pcall(function() 
+                                    if type(conn.Function) == "function" then 
+                                        conn.Function(charKey) 
+                                    end 
+                                end)
+                            end
                         end
-                        return nil
-                    end
-                })
-                
-                local charKey = string.lower(keyString)
 
-                -- MOBILE 2 : Firesignal direct
-                if firesignal then
-                    pcall(function() firesignal(game:GetService("UserInputService").InputBegan, fakeInput, false) end)
-                    if #charKey == 1 then
-                        pcall(function() firesignal(Core.Player:GetMouse().KeyDown, charKey) end)
-                    end
-                end
-
-                -- MOBILE 3 : Piratage profond des connexions
-                if getconnections then
-                    for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                        local s = pcall(function() 
-                            if type(conn.Function) == "function" then conn.Function(fakeInput, false) else conn:Fire(fakeInput, false) end 
-                        end)
-                        if not s then pcall(function() conn:Fire(fakeInput, false) end) end
-                    end
-                    
-                    if #charKey == 1 then
-                        for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
-                            local s = pcall(function() 
-                                if type(conn.Function) == "function" then conn.Function(charKey) else conn:Fire(charKey) end 
+                        -- B) Fausser le UserInputService
+                        local fakeInput = {
+                            UserInputType = Enum.UserInputType.Keyboard,
+                            KeyCode = keyCode,
+                            UserInputState = Enum.UserInputState.Begin
+                        }
+                        -- Sécurité Anti-Crash
+                        setmetatable(fakeInput, {
+                            __index = function(t, k)
+                                return function() return false end
+                            end
+                        })
+                        
+                        for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
+                            pcall(function() 
+                                if type(conn.Function) == "function" then 
+                                    conn.Function(fakeInput, false) 
+                                end 
                             end)
-                            if not s then pcall(function() conn:Fire(charKey) end) end
                         end
                     end
                 end
-            end
+            end)
         end)
     end
 
@@ -8259,18 +8243,17 @@ task.spawn(function()
         b.Activated:Connect(callback); return b
     end
     
-    -- 🛑 EXECUTION DIRECTE SUR MOBILE (Plus besoin de simuler le clavier pour Clone/Reset)
     local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
         SimulateKey(Core.Keys.Clone)
-        instantClone() -- Sécurité : Force le clone directement
+        instantClone()
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then 
-            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0) -- Sécurité : Force le reset directement
+            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0)
         end
     end)
 
@@ -8341,7 +8324,6 @@ task.spawn(function()
         g.DescendantAdded:Connect(function(desc) if desc:IsA("TextLabel") then task.spawn(function() while desc.Text == "" or desc.Text == "TextLabel" do task.wait(0.1) end; if _G.SendScruliNotif then _G.SendScruliNotif(desc.Text) end end) end end)
     end
     
-    -- 🛑 FIX INVIS PANEL SPAM : On le cache au lancement, mais on ne le bloque pas
     task.spawn(function()
         local invisGui = Core.Gui:WaitForChild("XiInvisPanel", 10)
         if invisGui then invisGui.Enabled = false end
@@ -8360,7 +8342,7 @@ task.spawn(function()
         end)
         topbar.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
         Core.UIS.InputChanged:Connect(function(input) if input == dragInput and dragging then 
-            local delta = (input.Position - dragStart) / globalScale -- Ajustement pour que le drag ne lag pas avec le UIScale
+            local delta = (input.Position - dragStart) / globalScale
             Core.Tween:Create(frame, TweenInfo.new(0.1), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play() 
         end end)
     end
@@ -8488,8 +8470,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 MOBILE SIZES FIXED", "All GUIs are now perfectly scaled for mobile screens. Dragging is fixed too!")
-    AddUpdateItem("🛑 TP CRASH FIXED", "Pressing the TP button on mobile executors will no longer crash your game.")
+    AddUpdateItem("📱 ANTI-CRASH MOBILE", "Complete removal of bad inputs causing mobile executors to close.")
     AddUpdateItem("⚙️ BUTTON BUG PATCHED", "Buttons now trigger internally. 100% reliable clicks.")
     AddUpdateItem("👻 INVIS PANEL FIXED", "The Invis panel no longer opens automatically every time.")
 
