@@ -8132,7 +8132,6 @@ task.spawn(function()
                     KeyCode = keyCode,
                     UserInputState = Enum.UserInputState.Begin
                 }
-                -- Sécurité Anti-Crash : Fausse les fonctions de l'InputObject pour ne pas faire bugger Lethal Hub
                 setmetatable(fakeInput, {
                     __index = function(t, k)
                         if type(k) == "string" and (k:find("Is") or k:find("Get")) then
@@ -8154,7 +8153,6 @@ task.spawn(function()
 
                 -- MOBILE 3 : Piratage profond des connexions (Dernier recours)
                 if getconnections then
-                    -- A) Fausser le UserInputService (Gère toutes les touches, y compris RightShift)
                     for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
                         local s = pcall(function() 
                             if type(conn.Function) == "function" then conn.Function(fakeInput, false) else conn:Fire(fakeInput, false) end 
@@ -8162,7 +8160,6 @@ task.spawn(function()
                         if not s then pcall(function() conn:Fire(fakeInput, false) end) end
                     end
                     
-                    -- B) Fausser la Souris (Uniquement pour les lettres comme "t", "v", "q")
                     if #charKey == 1 then
                         for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
                             local s = pcall(function() 
@@ -8174,6 +8171,32 @@ task.spawn(function()
                 end
             end
         end)
+    end
+
+    -- =========================================================
+    -- 🚀 CUSTOM TP FUNCTION FOR MOBILE 
+    -- =========================================================
+    local function ForceMobileTP()
+        local mouse = Core.Player:GetMouse()
+        local char = Core.Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+        local targetPos = nil
+        if isMobile then
+            -- Sur mobile, on TP là où la caméra regarde (au centre de l'écran) à une distance raisonnable
+            local camera = workspace.CurrentCamera
+            local ray = Ray.new(camera.CFrame.Position, camera.CFrame.LookVector * 500)
+            local hit, pos = workspace:FindPartOnRay(ray, char)
+            targetPos = pos
+        else
+            targetPos = mouse.Hit.Position
+        end
+
+        if targetPos then
+            char.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+            PlayTPSound()
+            if _G.SendScruliNotif then _G.SendScruliNotif("⚡ CUSTOM TP SUCCESSFUL") end
+        end
     end
 
     -- =========================================================
@@ -8263,7 +8286,11 @@ task.spawn(function()
     
     -- 🛑 EXECUTION DIRECTE SUR MOBILE (Plus besoin de simuler le clavier pour Clone/Reset)
     local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
-        SimulateKey(Core.Keys.TP) 
+        if isMobile then
+            ForceMobileTP() -- On utilise la fonction 100% custom pour mobile
+        else
+            SimulateKey(Core.Keys.TP) 
+        end
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
         SimulateKey(Core.Keys.Clone)
