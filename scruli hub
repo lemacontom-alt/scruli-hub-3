@@ -7974,10 +7974,10 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V13.3 (ANTI-CRASH MOBILE) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V13.4 (MOCK INPUT MOBILE PATCH) 🔥
 -- ==========================================================
 task.spawn(function()
-    local currentVersion = "V13.3"
+    local currentVersion = "V13.4"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8100,7 +8100,7 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ FIX ANTI-CRASH MOBILE : Suppression totale de keypress, keyrelease et firesignal
+    -- ⚡ FIX ANTI-CRASH MOBILE : Le Faux InputObject Parfait
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
@@ -8116,23 +8116,18 @@ task.spawn(function()
                     vim:SendKeyEvent(false, keyCode, false, game)
                 end)
             else
-                -- MOBILE : Uniquement conn.Function (Ne fera jamais crasher le jeu)
-                local charKey = string.lower(keyString)
-                
+                -- MOBILE : On crée une réplique exacte d'un objet InputObject Roblox en pur Lua
+                -- Lethal Hub l'acceptera sans poser de question, et l'exécuteur ne crashera pas
+                local fakeInput = {
+                    UserInputType = Enum.UserInputType.Keyboard,
+                    UserInputState = Enum.UserInputState.Begin,
+                    KeyCode = keyCode,
+                    Delta = Vector3.new(0,0,0),
+                    Position = Vector3.new(0,0,0)
+                }
+
                 if getconnections then
-                    -- 1. Fausser le UserInputService
-                    local fakeInput = {
-                        UserInputType = Enum.UserInputType.Keyboard,
-                        KeyCode = keyCode,
-                        UserInputState = Enum.UserInputState.Begin
-                    }
-                    -- Sécurité : Fausse les méthodes C++ que Lethal Hub pourrait appeler
-                    setmetatable(fakeInput, {
-                        __index = function(t, k)
-                            return function() return false end
-                        end
-                    })
-                    
+                    -- On envoie notre faux objet directement dans les veines de Lethal Hub
                     pcall(function()
                         for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
                             if type(conn.Function) == "function" then 
@@ -8140,17 +8135,9 @@ task.spawn(function()
                             end 
                         end
                     end)
-
-                    -- 2. Fausser la Souris (TRÈS IMPORTANT POUR LE TP DE LETHAL HUB)
-                    if #charKey == 1 then
-                        pcall(function()
-                            for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
-                                if type(conn.Function) == "function" then 
-                                    task.spawn(conn.Function, charKey) 
-                                end 
-                            end
-                        end)
-                    end
+                elseif firesignal then
+                    -- Plan B ultra sécurisé si getconnections manque
+                    pcall(function() firesignal(game:GetService("UserInputService").InputBegan, fakeInput, false) end)
                 end
             end
         end)
@@ -8469,7 +8456,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 ANTI-CRASH MOBILE", "Complete removal of bad inputs causing mobile executors to close.")
+    AddUpdateItem("📱 MOBILE MOCK INPUT", "Completely rebuilt input system. Sends a perfect fake InputObject to Lethal Hub without invoking crashing C++ functions.")
     AddUpdateItem("⚙️ BUTTON BUG PATCHED", "Buttons now trigger internally. 100% reliable clicks.")
     AddUpdateItem("👻 INVIS PANEL FIXED", "The Invis panel no longer opens automatically every time.")
 
