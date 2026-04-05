@@ -7974,11 +7974,10 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V13.1 (100% COMPLETE & FIXED) 🔥
--- TOUTE LA LOGIQUE CONSERVÉE | FIX CLIC LETHAL HUB | FOND LAVE
+-- 🔥 SCRULI HUB - LAVA EDITION V13.2 (MOBILE & CLICK PATCHED) 🔥
 -- ==========================================================
 task.spawn(function()
-    local currentVersion = "V13.1"
+    local currentVersion = "V13.2"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8033,7 +8032,7 @@ task.spawn(function()
     }
 
     local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
-    local globalScale = isMobile and 0.75 or 1
+    local globalScale = isMobile and 0.70 or 1 -- 📱 REDUCTION DE 30% POUR MOBILE
     
     local function PlayTPSound()
         local sound = Instance.new("Sound", workspace)
@@ -8055,7 +8054,6 @@ task.spawn(function()
         grad.Rotation = rot or 45; return grad
     end
 
-    -- 🔥 FOND DE LAVE ANIMÉ SUR LES PANNEAUX (NE CACHE PLUS RIEN)
     local function ApplyLavaGradient(frame)
         if not frame then return end
         frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -8072,17 +8070,29 @@ task.spawn(function()
     end
     
     -- =========================================================
-    -- 🤖 CLIC LETHAL HUB EXACTEMENT COMME DEMANDÉ
+    -- 🤖 CLIC LETHAL HUB (PATCH 100% FIABLE VIA GETCONNECTIONS)
     -- =========================================================
     local function Clk(button) 
         if not button then return end
         task.spawn(function()
             pcall(function()
+                local fired = false
+                -- 1ère méthode (La meilleure pour Mobile/Executors) : Activer les connections
+                if getconnections then
+                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do conn:Fire(); fired = true end
+                    for _, conn in ipairs(getconnections(button.Activated)) do conn:Fire(); fired = true end
+                end
+                if fired then return end
+
+                -- 2ème méthode : Firesignal classique
                 if firesignal then
                     pcall(function() firesignal(button.MouseButton1Click) end)
-                    pcall(function() firesignal(button.MouseButton1Down) end)
                     pcall(function() firesignal(button.Activated) end)
-                else
+                    return
+                end
+
+                -- 3ème méthode : VIM (Seulement PC car crash sur mobile)
+                if not isMobile then
                     local vim = game:GetService("VirtualInputManager")
                     local inset = game:GetService("GuiService"):GetGuiInset()
                     local x = button.AbsolutePosition.X + (button.AbsoluteSize.X / 2) + inset.X
@@ -8096,13 +8106,32 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
+    -- ⚡ FIX MOBILE : Fausse l'Input interne au lieu d'utiliser un clavier virtuel
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
-        if success and keyCode then
-            local vim = game:GetService("VirtualInputManager")
-            vim:SendKeyEvent(true, keyCode, false, game); task.wait(0.05); vim:SendKeyEvent(false, keyCode, false, game)
-        end
+        if not success or not keyCode then return end
+
+        pcall(function()
+            if not isMobile then
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, keyCode, false, game)
+                task.wait(0.05)
+                vim:SendKeyEvent(false, keyCode, false, game)
+            else
+                -- Piratage des connexions internes du jeu (Infaillible sur Mobile)
+                if getconnections then
+                    local fakeInput = {
+                        UserInputType = Enum.UserInputType.Keyboard,
+                        KeyCode = keyCode,
+                        UserInputState = Enum.UserInputState.Begin
+                    }
+                    for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
+                        pcall(function() conn:Fire(fakeInput, false) end)
+                    end
+                end
+            end
+        end)
     end
 
     -- =========================================================
@@ -8185,13 +8214,25 @@ task.spawn(function()
 
     local function CreateMobBtn(txt, pos, color, callback)
         local b = Instance.new("TextButton", MobileControls); b.Size = UDim2.new(0, 50, 0, 50); b.Position = pos; b.BackgroundColor3 = color; b.Text = txt; b.Font = Enum.Font.GothamBlack; b.TextColor3 = Color3.new(1,1,1); b.TextSize = 10; Instance.new("UICorner", b).CornerRadius = UDim.new(1,0)
-        b.TextStrokeTransparency = 1 -- FIX: Text net sur mobile
+        b.TextStrokeTransparency = 1 
         local str = Instance.new("UIStroke", b); str.Color = Core.Theme.Stroke; str.Thickness = 2; str.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         b.Activated:Connect(callback); return b
     end
-    local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() SimulateKey(Core.Keys.TP) end)
-    local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() SimulateKey(Core.Keys.Clone) end)
-    local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() SimulateKey(Core.Keys.Reset) end)
+    
+    -- 🛑 EXECUTION DIRECTE SUR MOBILE (Plus besoin de simuler le clavier)
+    local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
+        SimulateKey(Core.Keys.TP) 
+    end)
+    local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
+        SimulateKey(Core.Keys.Clone)
+        instantClone() -- Sécurité : Force le clone directement
+    end)
+    local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
+        local char = Core.Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then 
+            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0) -- Sécurité : Force le reset directement
+        end
+    end)
 
     local dragM = false; local dragStartM; local startPosM
     mTP.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then dragM = true; dragStartM = i.Position; startPosM = MobileControls.Position end end)
@@ -8216,7 +8257,7 @@ task.spawn(function()
     Core.Player.CharacterAdded:Connect(function() _G.IsDesynced = false; if hooked then pcall(function() raknet.remove_send_hook(rakhook) end); hooked = false end end)
 
     -- =========================================================
-    -- 🔴 SERVER POS SYSTEM (LA BOULE EST VISIBLE !)
+    -- 🔴 SERVER POS SYSTEM
     -- =========================================================
     local ShowServerPos = true
     local ServerSphere, ServerBG, ServerText = nil, nil, nil
@@ -8226,7 +8267,7 @@ task.spawn(function()
         if ServerSphere then ServerSphere:Destroy() end
         local char = Core.Player.Character; if not char then return end
         ServerSphere = Instance.new("Part", workspace); ServerSphere.Name = "SCRULI_SERVER_POS"; ServerSphere.Shape = Enum.PartType.Ball; ServerSphere.Size = Vector3.new(3, 3, 3); ServerSphere.Color = Core.Theme.PureRed; ServerSphere.Material = Enum.Material.Neon; ServerSphere.Anchored = true; ServerSphere.CanCollide = false; ServerSphere.CanTouch = false; ServerSphere.CanQuery = false; ServerSphere.CastShadow = false; 
-        ServerSphere.Transparency = 0.4 -- ICI LE FIX, 0.4 DE TRANSPARENCE !
+        ServerSphere.Transparency = 0.4 
         ServerBG = Instance.new("BillboardGui", ServerSphere); ServerBG.AlwaysOnTop = true; ServerBG.Size = UDim2.new(0, 200, 0, 30); ServerBG.StudsOffset = Vector3.new(0, 2.5, 0); ServerBG.Enabled = false 
         ServerText = Instance.new("TextLabel", ServerBG); ServerText.Size = UDim2.new(1, 0, 1, 0); ServerText.BackgroundTransparency = 1; ServerText.Text = "🔥 SERVER POS"; ServerText.TextColor3 = Core.Theme.PureRed; ServerText.Font = Enum.Font.GothamBlack; ServerText.TextSize = 14; ServerText.TextStrokeTransparency = 0; ServerText.TextStrokeColor3 = Color3.new(0, 0, 0)
     end
@@ -8259,12 +8300,18 @@ task.spawn(function()
         g.Enabled = false; g:GetPropertyChangedSignal("Enabled"):Connect(function() g.Enabled = false end)
         g.DescendantAdded:Connect(function(desc) if desc:IsA("TextLabel") then task.spawn(function() while desc.Text == "" or desc.Text == "TextLabel" do task.wait(0.1) end; if _G.SendScruliNotif then _G.SendScruliNotif(desc.Text) end end) end end)
     end
+    
+    -- 🛑 FIX INVIS PANEL SPAM : On le cache au lancement, mais on ne le bloque pas
+    task.spawn(function()
+        local invisGui = Core.Gui:WaitForChild("XiInvisPanel", 10)
+        if invisGui then invisGui.Enabled = false end
+    end)
 
     Core.Gui.ChildAdded:Connect(function(child) if table.find(badGuis, child.Name) then NukeOldGui(child) elseif child.Name == "XiNotif" then InterceptXiNotif(child) end end)
     for _, child in ipairs(Core.Gui:GetChildren()) do if table.find(badGuis, child.Name) then NukeOldGui(child) elseif child.Name == "XiNotif" then InterceptXiNotif(child) end end
 
     -- =========================================================
-    -- 🔧 DRAG & UI FUNCTIONS
+    -- 🔧 DRAG & UI FUNCTIONS (FIXED FOR MOBILE SCALING)
     -- =========================================================
     local function MakeDraggable(topbar, frame)
         local dragging, dragInput, dragStart, startPos
@@ -8272,7 +8319,10 @@ task.spawn(function()
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true; dragStart = input.Position; startPos = frame.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end) end 
         end)
         topbar.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
-        Core.UIS.InputChanged:Connect(function(input) if input == dragInput and dragging then local delta = input.Position - dragStart; Core.Tween:Create(frame, TweenInfo.new(0.1), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play() end end)
+        Core.UIS.InputChanged:Connect(function(input) if input == dragInput and dragging then 
+            local delta = (input.Position - dragStart) / globalScale -- Ajustement pour que le drag ne lag pas avec le UIScale
+            Core.Tween:Create(frame, TweenInfo.new(0.1), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play() 
+        end end)
     end
 
     function Core.IsActive(node) 
@@ -8336,32 +8386,36 @@ task.spawn(function()
     end)
 
     -- =========================================================
-    -- 🎨 CRÉATION DES PANNEAUX
+    -- 🎨 CRÉATION DES PANNEAUX (AVEC UISCALE MOBILE)
     -- =========================================================
+    local function ScalePanel(frame)
+        if isMobile then local s = Instance.new("UIScale", frame); s.Scale = globalScale end
+    end
+
     local MainFrame = Instance.new("Frame", SG)
     MainFrame.Size = UDim2.new(0, 520, 0, 340); MainFrame.Position = UDim2.new(0.5, -260, 0.5, -170); MainFrame.BackgroundColor3 = Core.Theme.Obsidian; MainFrame.Visible = initState.Main
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", MainFrame).Color = Core.Theme.FireRed; AddDropShadow(MainFrame, 20); ApplyLavaGradient(MainFrame)
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", MainFrame).Color = Core.Theme.FireRed; AddDropShadow(MainFrame, 20); ApplyLavaGradient(MainFrame); ScalePanel(MainFrame)
 
     local ASPanel = Instance.new("Frame", SG)
     ASPanel.Name = "Scruli_CustomStealUI"; ASPanel.Size = UDim2.new(0, 260, 0, 420); ASPanel.Position = UDim2.new(0.5, -340, 0.5, -120); ASPanel.BackgroundColor3 = Core.Theme.Obsidian; ASPanel.Visible = initState.Steal
-    Instance.new("UICorner", ASPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", ASPanel).Color = Core.Theme.FireRed; AddDropShadow(ASPanel, 15); ApplyLavaGradient(ASPanel)
+    Instance.new("UICorner", ASPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", ASPanel).Color = Core.Theme.FireRed; AddDropShadow(ASPanel, 15); ApplyLavaGradient(ASPanel); ScalePanel(ASPanel)
 
     local AdminPanel = Instance.new("Frame", SG)
     AdminPanel.Name = "Scruli_CustomAdminUI"; AdminPanel.Size = UDim2.new(0, 330, 0, 480); AdminPanel.Position = UDim2.new(0.5, 120, 0.5, -120); AdminPanel.BackgroundColor3 = Core.Theme.Obsidian; AdminPanel.Visible = initState.Admin
-    Instance.new("UICorner", AdminPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", AdminPanel).Color = Core.Theme.FireRed; AddDropShadow(AdminPanel, 15); ApplyLavaGradient(AdminPanel)
+    Instance.new("UICorner", AdminPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", AdminPanel).Color = Core.Theme.FireRed; AddDropShadow(AdminPanel, 15); ApplyLavaGradient(AdminPanel); ScalePanel(AdminPanel)
     
     local SpeedPanel = Instance.new("Frame", SG)
     SpeedPanel.Name = "Scruli_CustomSpeedUI"; SpeedPanel.Size = UDim2.new(0, 240, 0, 230); SpeedPanel.Position = UDim2.new(0.5, 100, 0.5, -120); SpeedPanel.BackgroundColor3 = Core.Theme.Obsidian; SpeedPanel.Visible = initState.Speed
-    Instance.new("UICorner", SpeedPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", SpeedPanel).Color = Core.Theme.FireRed; AddDropShadow(SpeedPanel, 15); ApplyLavaGradient(SpeedPanel)
+    Instance.new("UICorner", SpeedPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", SpeedPanel).Color = Core.Theme.FireRed; AddDropShadow(SpeedPanel, 15); ApplyLavaGradient(SpeedPanel); ScalePanel(SpeedPanel)
 
     local DesyncPanel = Instance.new("Frame", SG)
     DesyncPanel.Name = "Scruli_CustomDesyncUI"; DesyncPanel.Size = UDim2.new(0, 240, 0, 180); DesyncPanel.Position = UDim2.new(0.5, 150, 0.5, -120); DesyncPanel.BackgroundColor3 = Core.Theme.Obsidian; DesyncPanel.Visible = initState.DesyncPanel or false
-    Instance.new("UICorner", DesyncPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", DesyncPanel).Color = Core.Theme.FireRed; AddDropShadow(DesyncPanel, 15); ApplyLavaGradient(DesyncPanel)
+    Instance.new("UICorner", DesyncPanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", DesyncPanel).Color = Core.Theme.FireRed; AddDropShadow(DesyncPanel, 15); ApplyLavaGradient(DesyncPanel); ScalePanel(DesyncPanel)
 
     local UpdatePanel = Instance.new("Frame", SG)
     UpdatePanel.Name = "Scruli_UpdateLog"
     UpdatePanel.Size = UDim2.new(0, 420, 0, 450); UpdatePanel.Position = UDim2.new(0.5, -210, 0.5, -225); UpdatePanel.BackgroundColor3 = Core.Theme.Obsidian; UpdatePanel.Visible = false
-    Instance.new("UICorner", UpdatePanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", UpdatePanel).Color = Core.Theme.FireRed; AddDropShadow(UpdatePanel, 20); ApplyLavaGradient(UpdatePanel)
+    Instance.new("UICorner", UpdatePanel).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", UpdatePanel).Color = Core.Theme.FireRed; AddDropShadow(UpdatePanel, 20); ApplyLavaGradient(UpdatePanel); ScalePanel(UpdatePanel)
 
     local UI = {}
     local function SaveState() 
@@ -8374,12 +8428,10 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 📜 UPDATE LOG PANEL (AVEC SA PROPRE TOP BAR STYLÉE ET TEXTES EN ANGLAIS)
+    -- 📜 UPDATE LOG PANEL
     -- =========================================================
     local UTop = Instance.new("Frame", UpdatePanel); UTop.Size = UDim2.new(1, 0, 0, 40); UTop.BackgroundColor3 = Core.Theme.Volcanic; Instance.new("UICorner", UTop).CornerRadius = UDim.new(0, 10)
-    
     local UTopLine = Instance.new("Frame", UTop); UTopLine.Size = UDim2.new(1,0,0,2); UTopLine.Position = UDim2.new(0,0,1,-2); UTopLine.BackgroundColor3 = Core.Theme.LavaLight; UTopLine.BorderSizePixel = 0
-
     local UTit = Instance.new("TextLabel", UTop); UTit.Size = UDim2.new(1, -40, 1, 0); UTit.Position = UDim2.new(0, 15, 0, 0); UTit.BackgroundTransparency = 1; UTit.Text = "🔥 UPDATE LOG : " .. currentVersion .. " 🔥"; UTit.Font = Enum.Font.GothamBlack; UTit.TextColor3 = Core.Theme.LavaLight; UTit.TextSize = 16; UTit.TextXAlignment = Enum.TextXAlignment.Left
     local UClose = Instance.new("TextButton", UTop); UClose.Size = UDim2.new(0, 40, 0, 40); UClose.Position = UDim2.new(1, -40, 0, 0); UClose.BackgroundTransparency = 1; UClose.Text = "X"; UClose.Font = Enum.Font.GothamBold; UClose.TextColor3 = Core.Theme.Ash; UClose.TextSize = 16
     UClose.MouseButton1Click:Connect(function() Core.Tween:Create(UpdatePanel, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play(); task.wait(0.3); UpdatePanel.Visible = false; SaveState() end)
@@ -8396,10 +8448,10 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 MOBILE KEYBINDS FIXED", "Mobile touch buttons simulate real keyboard inputs. Zero delay. No blur.")
-    AddUpdateItem("💾 RAKNET STATE SAVED", "Raknet (Hook & Desync) remembers its state on startup. No more clicking.")
-    AddUpdateItem("🎵 SATISFYING STARTUP", "A new clean UI sound plays when the Hub injects.")
-    AddUpdateItem("📜 UPDATE LOG PANEL", "This clean panel appears once for every new version.")
+    AddUpdateItem("📱 MOBILE SIZES FIXED", "All GUIs are now perfectly scaled for mobile screens. Dragging is fixed too!")
+    AddUpdateItem("🛑 TP CRASH FIXED", "Pressing the TP button on mobile executors will no longer crash your game.")
+    AddUpdateItem("⚙️ BUTTON BUG PATCHED", "Buttons now trigger internally. 100% reliable clicks.")
+    AddUpdateItem("👻 INVIS PANEL FIXED", "The Invis panel no longer opens automatically every time.")
 
     local function ShowUpdateLog()
         UpdatePanel.Size = UDim2.new(0, 0, 0, 0); UpdatePanel.Visible = true
@@ -8506,9 +8558,9 @@ task.spawn(function()
     MainCloseBtn.MouseButton1Click:Connect(function() Core.Tween:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Size = UDim2.new(0, 480, 0, 310)}):Play(); task.wait(0.2); MainFrame.Visible = false; SaveState() end)
     
     local draggingMain, dragInputMain, dragStartMain, startPosMain
-    TopBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingMain = true; dragStartMain = input.Position; startPosMain = MainFrame.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then draggingMain = false end end) end end)
-    TopBar.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInputMain = input end end)
-    Core.UIS.InputChanged:Connect(function(input) if input == dragInputMain and draggingMain then local delta = input.Position - dragStartMain; Core.Tween:Create(MainFrame, TweenInfo.new(0.1), {Position = UDim2.new(startPosMain.X.Scale, startPosMain.X.Offset + delta.X, startPosMain.Y.Scale, startPosMain.Y.Offset + delta.Y)}):Play() end end)
+    TopBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then draggingMain = true; dragStartMain = input.Position; startPosMain = MainFrame.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then draggingMain = false end end) end end)
+    TopBar.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInputMain = input end end)
+    Core.UIS.InputChanged:Connect(function(input) if input == dragInputMain and draggingMain then local delta = (input.Position - dragStartMain) / globalScale; Core.Tween:Create(MainFrame, TweenInfo.new(0.1), {Position = UDim2.new(startPosMain.X.Scale, startPosMain.X.Offset + delta.X, startPosMain.Y.Scale, startPosMain.Y.Offset + delta.Y)}):Play() end end)
     
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 130, 1, -50);
@@ -8561,11 +8613,7 @@ task.spawn(function()
     DPClose.BackgroundTransparency = 1; DPClose.Text = "X"; DPClose.Font = Enum.Font.GothamBold; DPClose.TextColor3 = Core.Theme.Ash;
     DPClose.TextSize = 14
     DPClose.MouseButton1Click:Connect(function() DesyncPanel.Visible = false; SaveState() end)
-    
-    local draggingDP, dragInputDP, dragStartDP, startPosDP
-    DPTop.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingDP = true; dragStartDP = input.Position; startPosDP = DesyncPanel.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then draggingDP = false end end) end end)
-    DPTop.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInputDP = input end end)
-    Core.UIS.InputChanged:Connect(function(input) if input == dragInputDP and draggingDP then local delta = input.Position - dragStartDP; Core.Tween:Create(DesyncPanel, TweenInfo.new(0.1), {Position = UDim2.new(startPosDP.X.Scale, startPosDP.X.Offset + delta.X, startPosDP.Y.Scale, startPosDP.Y.Offset + delta.Y)}):Play() end end)
+    MakeDraggable(DPTop, DesyncPanel)
 
     local DPCont = Instance.new("Frame", DesyncPanel)
     DPCont.Size = UDim2.new(1,-20,1,-45); DPCont.Position = UDim2.new(0,10,0,40); DPCont.BackgroundTransparency = 1;
@@ -8611,7 +8659,6 @@ task.spawn(function()
     UI.CreateLocalToggle(PDesync, "Auto-Desync on Clone", _G.AutoDesyncOnLoad, function(state) _G.AutoDesyncOnLoad = state end)
     UI.CreateLocalToggle(PDesync, "Show Server Pos", ShowServerPos, function(state) ShowServerPos = state end)
 
-    -- ADDED V13: FORCED RAKNET BUTTONS
     _G.RHActive = initState.RHActive or false
     _G.RDActive = initState.RDActive or false
 
@@ -8753,11 +8800,7 @@ task.spawn(function()
     SPClose.Position = UDim2.new(1, -35, 0, 0); SPClose.BackgroundTransparency = 1; SPClose.Text = "X"; SPClose.Font = Enum.Font.GothamBold; SPClose.TextColor3 = Core.Theme.Ash;
     SPClose.TextSize = 14
     SPClose.MouseButton1Click:Connect(function() SpeedPanel.Visible = false; SaveState() end)
-    
-    local draggingSP, dragInputSP, dragStartSP, startPosSP
-    SPTop.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingSP = true; dragStartSP = input.Position; startPosSP = SpeedPanel.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then draggingSP = false end end) end end)
-    SPTop.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInputSP = input end end)
-    Core.UIS.InputChanged:Connect(function(input) if input == dragInputSP and draggingSP then local delta = input.Position - dragStartSP; Core.Tween:Create(SpeedPanel, TweenInfo.new(0.1), {Position = UDim2.new(startPosSP.X.Scale, startPosSP.X.Offset + delta.X, startPosSP.Y.Scale, startPosSP.Y.Offset + delta.Y)}):Play() end end)
+    MakeDraggable(SPTop, SpeedPanel)
     
     local SPCont = Instance.new("Frame", SpeedPanel)
     SPCont.Size = UDim2.new(1, -24, 1, -45);
@@ -8799,10 +8842,10 @@ task.spawn(function()
     end 
     task.defer(function() updateSlider(STEAL_SPEED) end)
 
-    SliderBg.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then draggingS = true; updateSlider(MIN_S + (math.clamp((inp.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1) * (MAX_S - MIN_S))) end end) 
-    SliderKnob.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then draggingS = true end end) 
-    Core.UIS.InputEnded:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then draggingS = false end end) 
-    Core.UIS.InputChanged:Connect(function(inp) if draggingS and inp.UserInputType == Enum.UserInputType.MouseMovement then 
+    SliderBg.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then draggingS = true; updateSlider(MIN_S + (math.clamp((inp.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1) * (MAX_S - MIN_S))) end end) 
+    SliderKnob.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then draggingS = true end end) 
+    Core.UIS.InputEnded:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then draggingS = false end end) 
+    Core.UIS.InputChanged:Connect(function(inp) if draggingS and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then 
         updateSlider(MIN_S + (math.clamp((inp.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1) * (MAX_S - MIN_S))) end end) 
     SpeedInput.FocusLost:Connect(function() local n = tonumber(SpeedInput.Text);
         updateSlider(n or STEAL_SPEED) end)
@@ -8848,11 +8891,7 @@ task.spawn(function()
     ASClose.BackgroundTransparency = 1; ASClose.Text = "X"; ASClose.Font = Enum.Font.GothamBold; ASClose.TextColor3 = Core.Theme.Ash;
     ASClose.TextSize = 14
     ASClose.MouseButton1Click:Connect(function() ASPanel.Visible = false; SaveState() end)
-    
-    local draggingAS, dragInputAS, dragStartAS, startPosAS
-    ASTop.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingAS = true; dragStartAS = input.Position; startPosAS = ASPanel.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then draggingAS = false end end) end end)
-    ASTop.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInputAS = input end end)
-    Core.UIS.InputChanged:Connect(function(input) if input == dragInputAS and draggingAS then local delta = input.Position - dragStartAS; Core.Tween:Create(ASPanel, TweenInfo.new(0.1), {Position = UDim2.new(startPosAS.X.Scale, startPosAS.X.Offset + delta.X, startPosAS.Y.Scale, startPosAS.Y.Offset + delta.Y)}):Play() end end)
+    MakeDraggable(ASTop, ASPanel)
     
     local ASCont = Instance.new("Frame", ASPanel)
     ASCont.Size = UDim2.new(1,-20,1,-45);
