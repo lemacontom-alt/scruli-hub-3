@@ -7972,11 +7972,12 @@ task.spawn(function()
         idBox.Text = ""
     end)
 end)
+
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V13.2 (MOBILE & CLICK PATCHED) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V13.3 (ANTI-CRASH MOBILE) 🔥
 -- ==========================================================
 task.spawn(function()
-    local currentVersion = "V13.2"
+    local currentVersion = "V13.3"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8031,7 +8032,7 @@ task.spawn(function()
     }
 
     local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
-    local globalScale = isMobile and 0.70 or 1 -- 📱 REDUCTION DE 30% POUR MOBILE
+    local globalScale = isMobile and 0.70 or 1 
     
     local function PlayTPSound()
         local sound = Instance.new("Sound", workspace)
@@ -8069,22 +8070,19 @@ task.spawn(function()
     end
     
     -- =========================================================
-    -- 🤖 CLIC LETHAL HUB (PATCH 100% FIABLE VIA GETCONNECTIONS)
+    -- 🤖 CLIC LETHAL HUB (SÉCURISÉ)
     -- =========================================================
     local function Clk(button) 
         if not button then return end
         task.spawn(function()
             pcall(function()
-                local fired = false
                 if getconnections then
-                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do conn:Fire(); fired = true end
-                    for _, conn in ipairs(getconnections(button.Activated)) do conn:Fire(); fired = true end
-                end
-                if fired then return end
-
-                if firesignal then
-                    pcall(function() firesignal(button.MouseButton1Click) end)
-                    pcall(function() firesignal(button.Activated) end)
+                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                    end
+                    for _, conn in ipairs(getconnections(button.Activated)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                    end
                     return
                 end
 
@@ -8102,59 +8100,59 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ FIX ANTI-CRASH MOBILE : Suppression totale de keypress et firesignal
+    -- ⚡ FIX ANTI-CRASH MOBILE : Suppression totale de keypress, keyrelease et firesignal
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
         task.spawn(function()
-            pcall(function()
-                if not isMobile then
-                    -- PC : Le VirtualInputManager fonctionne parfaitement
+            if not isMobile then
+                -- PC : Le VirtualInputManager fonctionne parfaitement
+                pcall(function()
                     local vim = game:GetService("VirtualInputManager")
                     vim:SendKeyEvent(true, keyCode, false, game)
                     task.wait(0.05)
                     vim:SendKeyEvent(false, keyCode, false, game)
-                else
-                    -- MOBILE : Uniquement conn.Function (La méthode la plus sûre)
-                    if getconnections then
-                        local charKey = string.lower(keyString)
-                        
-                        -- A) Fausser la Souris (Lethal Hub écoute ça pour TP)
-                        if #charKey == 1 then
-                            for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
-                                pcall(function() 
-                                    if type(conn.Function) == "function" then 
-                                        conn.Function(charKey) 
-                                    end 
-                                end)
-                            end
+                end)
+            else
+                -- MOBILE : Uniquement conn.Function (Ne fera jamais crasher le jeu)
+                local charKey = string.lower(keyString)
+                
+                if getconnections then
+                    -- 1. Fausser le UserInputService
+                    local fakeInput = {
+                        UserInputType = Enum.UserInputType.Keyboard,
+                        KeyCode = keyCode,
+                        UserInputState = Enum.UserInputState.Begin
+                    }
+                    -- Sécurité : Fausse les méthodes C++ que Lethal Hub pourrait appeler
+                    setmetatable(fakeInput, {
+                        __index = function(t, k)
+                            return function() return false end
                         end
-
-                        -- B) Fausser le UserInputService
-                        local fakeInput = {
-                            UserInputType = Enum.UserInputType.Keyboard,
-                            KeyCode = keyCode,
-                            UserInputState = Enum.UserInputState.Begin
-                        }
-                        -- Sécurité Anti-Crash
-                        setmetatable(fakeInput, {
-                            __index = function(t, k)
-                                return function() return false end
-                            end
-                        })
-                        
+                    })
+                    
+                    pcall(function()
                         for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                            pcall(function() 
-                                if type(conn.Function) == "function" then 
-                                    conn.Function(fakeInput, false) 
-                                end 
-                            end)
+                            if type(conn.Function) == "function" then 
+                                task.spawn(conn.Function, fakeInput, false) 
+                            end 
                         end
+                    end)
+
+                    -- 2. Fausser la Souris (TRÈS IMPORTANT POUR LE TP DE LETHAL HUB)
+                    if #charKey == 1 then
+                        pcall(function()
+                            for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
+                                if type(conn.Function) == "function" then 
+                                    task.spawn(conn.Function, charKey) 
+                                end 
+                            end
+                        end)
                     end
                 end
-            end)
+            end
         end)
     end
 
@@ -8324,6 +8322,7 @@ task.spawn(function()
         g.DescendantAdded:Connect(function(desc) if desc:IsA("TextLabel") then task.spawn(function() while desc.Text == "" or desc.Text == "TextLabel" do task.wait(0.1) end; if _G.SendScruliNotif then _G.SendScruliNotif(desc.Text) end end) end end)
     end
     
+    -- 🛑 FIX INVIS PANEL SPAM
     task.spawn(function()
         local invisGui = Core.Gui:WaitForChild("XiInvisPanel", 10)
         if invisGui then invisGui.Enabled = false end
