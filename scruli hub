@@ -8077,21 +8077,18 @@ task.spawn(function()
         task.spawn(function()
             pcall(function()
                 local fired = false
-                -- 1ère méthode (La meilleure pour Mobile/Executors) : Activer les connections
                 if getconnections then
                     for _, conn in ipairs(getconnections(button.MouseButton1Click)) do conn:Fire(); fired = true end
                     for _, conn in ipairs(getconnections(button.Activated)) do conn:Fire(); fired = true end
                 end
                 if fired then return end
 
-                -- 2ème méthode : Firesignal classique
                 if firesignal then
                     pcall(function() firesignal(button.MouseButton1Click) end)
                     pcall(function() firesignal(button.Activated) end)
                     return
                 end
 
-                -- 3ème méthode : VIM (Seulement PC car crash sur mobile)
                 if not isMobile then
                     local vim = game:GetService("VirtualInputManager")
                     local inset = game:GetService("GuiService"):GetGuiInset()
@@ -8106,7 +8103,7 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ FIX MOBILE : Fausse l'Input interne au lieu d'utiliser un clavier virtuel
+    -- ⚡ FIX MOBILE DÉFINITIF : Contournement intelligent des connexions et faux InputObject
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
@@ -8114,20 +8111,65 @@ task.spawn(function()
 
         pcall(function()
             if not isMobile then
+                -- PC : Le VirtualInputManager fonctionne parfaitement
                 local vim = game:GetService("VirtualInputManager")
                 vim:SendKeyEvent(true, keyCode, false, game)
                 task.wait(0.05)
                 vim:SendKeyEvent(false, keyCode, false, game)
             else
-                -- Piratage des connexions internes du jeu (Infaillible sur Mobile)
+                -- MOBILE 1 : Méthode native des exécuteurs
+                if keypress and keyrelease then
+                    pcall(function() 
+                        keypress(keyCode.Value) 
+                        task.wait(0.05)
+                        keyrelease(keyCode.Value)
+                    end)
+                end
+                
+                -- Création d'un faux Input robuste
+                local fakeInput = {
+                    UserInputType = Enum.UserInputType.Keyboard,
+                    KeyCode = keyCode,
+                    UserInputState = Enum.UserInputState.Begin
+                }
+                -- Sécurité Anti-Crash : Fausse les fonctions de l'InputObject pour ne pas faire bugger Lethal Hub
+                setmetatable(fakeInput, {
+                    __index = function(t, k)
+                        if type(k) == "string" and (k:find("Is") or k:find("Get")) then
+                            return function() return false end
+                        end
+                        return nil
+                    end
+                })
+                
+                local charKey = string.lower(keyString)
+
+                -- MOBILE 2 : Firesignal direct (Très efficace sur Delta/Codex)
+                if firesignal then
+                    pcall(function() firesignal(game:GetService("UserInputService").InputBegan, fakeInput, false) end)
+                    if #charKey == 1 then
+                        pcall(function() firesignal(Core.Player:GetMouse().KeyDown, charKey) end)
+                    end
+                end
+
+                -- MOBILE 3 : Piratage profond des connexions (Dernier recours)
                 if getconnections then
-                    local fakeInput = {
-                        UserInputType = Enum.UserInputType.Keyboard,
-                        KeyCode = keyCode,
-                        UserInputState = Enum.UserInputState.Begin
-                    }
+                    -- A) Fausser le UserInputService (Gère toutes les touches, y compris RightShift)
                     for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                        pcall(function() conn:Fire(fakeInput, false) end)
+                        local s = pcall(function() 
+                            if type(conn.Function) == "function" then conn.Function(fakeInput, false) else conn:Fire(fakeInput, false) end 
+                        end)
+                        if not s then pcall(function() conn:Fire(fakeInput, false) end) end
+                    end
+                    
+                    -- B) Fausser la Souris (Uniquement pour les lettres comme "t", "v", "q")
+                    if #charKey == 1 then
+                        for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
+                            local s = pcall(function() 
+                                if type(conn.Function) == "function" then conn.Function(charKey) else conn:Fire(charKey) end 
+                            end)
+                            if not s then pcall(function() conn:Fire(charKey) end) end
+                        end
                     end
                 end
             end
@@ -8219,7 +8261,7 @@ task.spawn(function()
         b.Activated:Connect(callback); return b
     end
     
-    -- 🛑 EXECUTION DIRECTE SUR MOBILE (Plus besoin de simuler le clavier)
+    -- 🛑 EXECUTION DIRECTE SUR MOBILE (Plus besoin de simuler le clavier pour Clone/Reset)
     local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
         SimulateKey(Core.Keys.TP) 
     end)
