@@ -7974,10 +7974,10 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V13.5 (MOBILE TP CRASH FIXED) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V13.6 (LETHAL NATIVE TP FIX) 🔥
 -- ==========================================================
 task.spawn(function()
-    local currentVersion = "V13.5"
+    local currentVersion = "V13.6"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8083,6 +8083,7 @@ task.spawn(function()
                     for _, conn in ipairs(getconnections(button.Activated)) do 
                         if type(conn.Function) == "function" then task.spawn(conn.Function) end
                     end
+                    return
                 end
 
                 if not isMobile then
@@ -8099,70 +8100,19 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- =========================================================
-    -- ⚡ FIX MOBILE DÉFINITIF : FILTRE ANTI-CRASH C++ 
-    -- =========================================================
+    -- ⚡ FIX ANTI-CRASH MOBILE : Utilisé uniquement sur PC maintenant
     local function SimulateKey(keyString)
-        if not keyString then return end
+        if not keyString or isMobile then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
         task.spawn(function()
-            if not isMobile then
-                -- PC : Le VirtualInputManager fonctionne parfaitement
-                pcall(function()
-                    local vim = game:GetService("VirtualInputManager")
-                    vim:SendKeyEvent(true, keyCode, false, game)
-                    task.wait(0.05)
-                    vim:SendKeyEvent(false, keyCode, false, game)
-                end)
-            else
-                -- MOBILE : Envoi sécurisé uniquement vers Lethal Hub
-                local fakeInput = {
-                    UserInputType = Enum.UserInputType.Keyboard,
-                    KeyCode = keyCode,
-                    UserInputState = Enum.UserInputState.Begin
-                }
-                
-                -- Sécurité anti-crash pour les fausses propriétés
-                setmetatable(fakeInput, {
-                    __index = function(t, k)
-                        if k == "KeyCode" then return keyCode end
-                        if k == "UserInputType" then return Enum.UserInputType.Keyboard end
-                        if k == "UserInputState" then return Enum.UserInputState.Begin end
-                        return function() return false end
-                    end
-                })
-
-                if getconnections then
-                    for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                        pcall(function()
-                            local fn = conn.Function
-                            if type(fn) == "function" then
-                                -- LE FILTRE MAGIQUE : Vérifie si le script est un script exploit (Lethal Hub)
-                                -- Ignore tous les scripts Core/Roblox pour éviter le crash !
-                                local isSafeScript = false
-                                pcall(function()
-                                    if isexecutorclosure and isexecutorclosure(fn) then
-                                        isSafeScript = true
-                                    elseif isourclosure and isourclosure(fn) then
-                                        isSafeScript = true
-                                    else
-                                        local env = getfenv(fn)
-                                        if env and env.script == nil then 
-                                            isSafeScript = true 
-                                        end
-                                    end
-                                end)
-                                
-                                if isSafeScript then
-                                    task.spawn(fn, fakeInput, false)
-                                end
-                            end
-                        end)
-                    end
-                end
-            end
+            pcall(function()
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, keyCode, false, game)
+                task.wait(0.05)
+                vim:SendKeyEvent(false, keyCode, false, game)
+            end)
         end)
     end
 
@@ -8251,16 +8201,68 @@ task.spawn(function()
         b.Activated:Connect(callback); return b
     end
     
+    -- 🛑 LA MAGIE : LIAISON DIRECTE AUX BOUTONS INTERNES DE LETHAL HUB
     local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
-        SimulateKey(Core.Keys.TP) 
+        if isMobile then
+            local lethalGui = Core.Gui:FindFirstChild("XiMobileControls")
+            if lethalGui then
+                local clicked = false
+                for _, btn in ipairs(lethalGui:GetDescendants()) do
+                    if btn:IsA("TextButton") and btn.Text == "TP" then
+                        if getconnections then
+                            for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do
+                                if type(conn.Function) == "function" then task.spawn(conn.Function, btn) end
+                            end
+                            for _, conn in ipairs(getconnections(btn.Activated)) do
+                                if type(conn.Function) == "function" then task.spawn(conn.Function, btn) end
+                            end
+                        elseif firesignal then
+                            pcall(function() firesignal(btn.MouseButton1Click) end)
+                            pcall(function() firesignal(btn.Activated) end)
+                        end
+                        clicked = true
+                        if _G.SendScruliNotif then _G.SendScruliNotif("⚡ LETHAL TP INITIATED") end
+                        break
+                    end
+                end
+                if not clicked and _G.SendScruliNotif then _G.SendScruliNotif("⚠️ LETHAL TP BUTTON NOT FOUND") end
+            end
+        else
+            SimulateKey(Core.Keys.TP) 
+        end
     end)
+
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        instantClone() -- Lancement direct de la fonction locale
+        if isMobile then
+            local lethalGui = Core.Gui:FindFirstChild("XiMobileControls")
+            if lethalGui then
+                for _, btn in ipairs(lethalGui:GetDescendants()) do
+                    if btn:IsA("TextButton") and btn.Text == "CL" then
+                        if getconnections then
+                            for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do
+                                if type(conn.Function) == "function" then task.spawn(conn.Function, btn) end
+                            end
+                        elseif firesignal then
+                            pcall(function() firesignal(btn.MouseButton1Click) end)
+                        end
+                        break
+                    end
+                end
+            end
+            instantClone() -- Fallback sécurité
+        else
+            SimulateKey(Core.Keys.Clone)
+            instantClone()
+        end
     end)
+
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then 
-            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0)
+            local hum = char:FindFirstChild("Humanoid")
+            local flying = Core.Player.Backpack:FindFirstChild("Flying Carpet") or char:FindFirstChild("Flying Carpet")
+            if hum and flying then hum:EquipTool(flying) end
+            char.HumanoidRootPart.CFrame = CFrame.new(0, 15000, 0)
         end
     end)
 
@@ -8478,7 +8480,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 MOBILE MOCK INPUT", "Completely rebuilt input system. Sends a perfect fake InputObject to Lethal Hub without invoking crashing C++ functions.")
+    AddUpdateItem("📱 MOBILE TP FIXED", "The button now finds Lethal Hub's internal TP button and pushes it directly. Zero crashes.")
     AddUpdateItem("⚙️ BUTTON BUG PATCHED", "Buttons now trigger internally. 100% reliable clicks.")
     AddUpdateItem("👻 INVIS PANEL FIXED", "The Invis panel no longer opens automatically every time.")
 
