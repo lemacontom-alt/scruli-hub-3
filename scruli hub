@@ -7974,10 +7974,10 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V13.4 (MOCK INPUT MOBILE PATCH) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V13.5 (MOBILE TP CRASH FIXED) 🔥
 -- ==========================================================
 task.spawn(function()
-    local currentVersion = "V13.4"
+    local currentVersion = "V13.5"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8083,7 +8083,6 @@ task.spawn(function()
                     for _, conn in ipairs(getconnections(button.Activated)) do 
                         if type(conn.Function) == "function" then task.spawn(conn.Function) end
                     end
-                    return
                 end
 
                 if not isMobile then
@@ -8100,7 +8099,9 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ FIX ANTI-CRASH MOBILE : Le Faux InputObject Parfait
+    -- =========================================================
+    -- ⚡ FIX MOBILE DÉFINITIF : FILTRE ANTI-CRASH C++ 
+    -- =========================================================
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
@@ -8116,28 +8117,50 @@ task.spawn(function()
                     vim:SendKeyEvent(false, keyCode, false, game)
                 end)
             else
-                -- MOBILE : On crée une réplique exacte d'un objet InputObject Roblox en pur Lua
-                -- Lethal Hub l'acceptera sans poser de question, et l'exécuteur ne crashera pas
+                -- MOBILE : Envoi sécurisé uniquement vers Lethal Hub
                 local fakeInput = {
                     UserInputType = Enum.UserInputType.Keyboard,
-                    UserInputState = Enum.UserInputState.Begin,
                     KeyCode = keyCode,
-                    Delta = Vector3.new(0,0,0),
-                    Position = Vector3.new(0,0,0)
+                    UserInputState = Enum.UserInputState.Begin
                 }
+                
+                -- Sécurité anti-crash pour les fausses propriétés
+                setmetatable(fakeInput, {
+                    __index = function(t, k)
+                        if k == "KeyCode" then return keyCode end
+                        if k == "UserInputType" then return Enum.UserInputType.Keyboard end
+                        if k == "UserInputState" then return Enum.UserInputState.Begin end
+                        return function() return false end
+                    end
+                })
 
                 if getconnections then
-                    -- On envoie notre faux objet directement dans les veines de Lethal Hub
-                    pcall(function()
-                        for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                            if type(conn.Function) == "function" then 
-                                task.spawn(conn.Function, fakeInput, false) 
-                            end 
-                        end
-                    end)
-                elseif firesignal then
-                    -- Plan B ultra sécurisé si getconnections manque
-                    pcall(function() firesignal(game:GetService("UserInputService").InputBegan, fakeInput, false) end)
+                    for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
+                        pcall(function()
+                            local fn = conn.Function
+                            if type(fn) == "function" then
+                                -- LE FILTRE MAGIQUE : Vérifie si le script est un script exploit (Lethal Hub)
+                                -- Ignore tous les scripts Core/Roblox pour éviter le crash !
+                                local isSafeScript = false
+                                pcall(function()
+                                    if isexecutorclosure and isexecutorclosure(fn) then
+                                        isSafeScript = true
+                                    elseif isourclosure and isourclosure(fn) then
+                                        isSafeScript = true
+                                    else
+                                        local env = getfenv(fn)
+                                        if env and env.script == nil then 
+                                            isSafeScript = true 
+                                        end
+                                    end
+                                end)
+                                
+                                if isSafeScript then
+                                    task.spawn(fn, fakeInput, false)
+                                end
+                            end
+                        end)
+                    end
                 end
             end
         end)
@@ -8232,8 +8255,7 @@ task.spawn(function()
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        SimulateKey(Core.Keys.Clone)
-        instantClone()
+        instantClone() -- Lancement direct de la fonction locale
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
