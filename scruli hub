@@ -2206,7 +2206,7 @@ end
 -- =========================================================
 local SG = Instance.new("ScreenGui")
 ParentGUI(SG)
-SG.Name = "ScruliHub_Amber"
+SG.Name = "ScruliHub"
 SG.ResetOnSpawn = false
 SG.IgnoreGuiInset = true
 
@@ -2385,7 +2385,7 @@ local titleLbl = Instance.new("TextLabel", hudFrame)
 titleLbl.Size = UDim2.new(0, 200, 1, 0)
 titleLbl.Position = UDim2.new(0, 65, 0, 0)
 titleLbl.BackgroundTransparency = 1
-titleLbl.Text = "SCRULI AMBER V3"
+titleLbl.Text = "SCRULI HUB V3"
 titleLbl.Font = Enum.Font.GothamBlack
 titleLbl.TextSize = 16
 titleLbl.TextColor3 = Theme.White
@@ -2455,7 +2455,7 @@ local setTit = Instance.new("TextLabel", setTop)
 setTit.Size = UDim2.new(1,0,0,30)
 setTit.Position = UDim2.new(0,25,0,10)
 setTit.BackgroundTransparency = 1
-setTit.Text = "SCRULI AMBER V3 - SETTINGS"
+setTit.Text = "SCRULI HUB V3 - SETTINGS"
 setTit.Font = Enum.Font.GothamBlack
 setTit.TextColor3 = Theme.White
 setTit.TextSize = 16
@@ -3224,7 +3224,7 @@ function updateTargetListUI()
     end)
 end
 
-local spCont = ApplyPanelStyle(SP, 210, 310, 0.02, 0.05, "SCRULI AMBER V3", "Steal Panel", "SP")
+local spCont = ApplyPanelStyle(SP, 210, 310, 0.02, 0.05, "SCRULI HUB V3", "Steal Panel", "SP")
 SP.Visible = Config.VisibleSP
 local spLay = Instance.new("UIListLayout", spCont)
 spLay.Padding = UDim.new(0,5)
@@ -3332,7 +3332,7 @@ _G.updateAutoBuyPill = updateAutoBuyPill
 
 CreatePill(spCont, "Auto Kick:", Config.AutoKickOnSteal or false, function(s) Config.AutoKickOnSteal = s end)
 
-local apCont = ApplyPanelStyle(AP, 200, 400, 0.02, 0.55, "SCRULI AMBER V3", "Actions", "AP")
+local apCont = ApplyPanelStyle(AP, 200, 400, 0.02, 0.55, "SCRULI HUB V3", "Actions", "AP")
 AP.Visible = Config.VisibleAP
 
 local apLay = Instance.new("UIListLayout", apCont)
