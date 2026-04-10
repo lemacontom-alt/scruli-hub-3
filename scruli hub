@@ -511,70 +511,72 @@ toggleDesyncFunc = function(state)
 end -- <-- C'EST CE 'END' QUI MANQUAIT POUR REPARER L'ERREUR DU 'DO' !
 local lastServerPos = Vector3.new()
 local serverPosPart = nil
-local serverPosLabel = nil
-local serverPosConn = nil
+local serverPosPart = nil
+local serverPosLoop = nil
 
 _G.toggleServerPosFunc = function(state)
-    if state then
-        if not serverPosPart then
-            serverPosPart = Instance.new("Part")
-            serverPosPart.Shape = Enum.PartType.Ball
-            serverPosPart.Size = Vector3.new(3, 3, 3)
-            serverPosPart.Material = Enum.Material.Neon
-            serverPosPart.Color = Color3.fromRGB(255, 0, 0)
-            serverPosPart.Anchored = true
-            serverPosPart.CanCollide = false
-            serverPosPart.CanTouch = false
-            serverPosPart.CanQuery = false
-            serverPosPart.CastShadow = false
-            serverPosPart.Transparency = 0.5
-            
-            local highlight = Instance.new("Highlight", serverPosPart)
-            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-            highlight.OutlineColor = Color3.fromRGB(255, 50, 50)
-            highlight.FillTransparency = 0.2
-            highlight.OutlineTransparency = 0
-            
-            local pl = Instance.new("PointLight", serverPosPart)
-            pl.Color = Color3.fromRGB(255, 50, 50)
-            pl.Range = 25
-            pl.Brightness = 10
-            
-            local bg = Instance.new("BillboardGui", serverPosPart)
-            bg.Size = UDim2.new(0, 200, 0, 50)
-            bg.StudsOffset = Vector3.new(0, 3, 0)
-            bg.AlwaysOnTop = true
-            
-            serverPosLabel = Instance.new("TextLabel", bg)
-            serverPosLabel.Size = UDim2.new(1, 0, 1, 0)
-            serverPosLabel.BackgroundTransparency = 1
-            serverPosLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-            serverPosLabel.TextStrokeTransparency = 0
-            serverPosLabel.Font = Enum.Font.GothamBlack
-            serverPosLabel.TextSize = 22
-            
-            serverPosPart.Parent = Workspace
-        end
-        
-        if serverPosConn then serverPosConn:Disconnect() end
-        serverPosConn = RunService.RenderStepped:Connect(function()
-            if not serverPosPart then return end
-            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                if MiscState.desyncEnabled then
-                    serverPosPart.Position = lastServerPos - Vector3.new(0, 2.5, 0)
-                else
-                    serverPosPart.Position = hrp.Position - Vector3.new(0, 2.5, 0)
-                    lastServerPos = hrp.Position
-                end
-                local dist = (hrp.Position - serverPosPart.Position).Magnitude
-                serverPosLabel.Text = string.format("%.1f Studs", dist)
-            end
-        end)
-    else
-        if serverPosConn then serverPosConn:Disconnect(); serverPosConn = nil end
+    if not state then
         if serverPosPart then serverPosPart:Destroy(); serverPosPart = nil end
+        if serverPosLoop then serverPosLoop:Disconnect(); serverPosLoop = nil end
+        return false
     end
+
+    if serverPosPart then serverPosPart:Destroy() end
+    
+    serverPosPart = Instance.new("Part")
+    serverPosPart.Name = "XiServerPos"
+    serverPosPart.Size = Vector3.new(2.5, 2.5, 2.5)
+    serverPosPart.Shape = Enum.PartType.Ball
+    serverPosPart.Material = Enum.Material.ForceField
+    serverPosPart.Color = Color3.fromRGB(0, 255, 255)
+    serverPosPart.Anchored = true
+    serverPosPart.CanCollide = false
+    serverPosPart.CastShadow = false
+    serverPosPart.Parent = workspace
+
+    local bb = Instance.new("BillboardGui", serverPosPart)
+    bb.Size = UDim2.new(0, 100, 0, 20)
+    bb.StudsOffset = Vector3.new(0, 2, 0)
+    bb.AlwaysOnTop = true
+    
+    local lbl = Instance.new("TextLabel", bb)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "SERVER POS"
+    lbl.TextColor3 = Color3.fromRGB(0, 255, 255)
+    lbl.Font = Enum.Font.GothamBlack
+    lbl.TextSize = 12
+
+    local RunService = game:GetService("RunService")
+    
+    serverPosLoop = RunService.RenderStepped:Connect(function()
+        local char = game.Players.LocalPlayer.Character
+        if not char then return end
+        
+        -- 1. Si tu as utilisé le "Invisible Steal", ton VRAI root est caché dans la caméra.
+        local oldRoot = workspace.CurrentCamera:FindFirstChild("HumanoidRootPart")
+        
+        -- 2. Si tu utilises le vrai Desync, tu as un fantôme créé sur la map.
+        local lagbackGhost = workspace.CurrentCamera:FindFirstChild("LagbackGhost") or workspace:FindFirstChild("LagbackGhost")
+        
+        if serverPosPart then
+            if oldRoot then
+                -- Le serveur te voit sur le oldRoot (qui a les animations/CFrame modifiés)
+                serverPosPart.CFrame = oldRoot.CFrame
+            elseif lagbackGhost and hooked then
+                -- Le serveur te voit là où le paquet a été drop (le fantôme)
+                serverPosPart.CFrame = lagbackGhost.CFrame
+            else
+                -- Si tu n'es pas desync, le serveur te voit sur ton HRP normal
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    serverPosPart.CFrame = hrp.CFrame
+                end
+            end
+        end
+    end)
+    
+    return true
 end
 -- =========================================================
 -- 🦾 NOTIFICATIONS LETHAL HUB
@@ -1088,6 +1090,18 @@ if Config.TpSettings.InfiniteJump then _G.setInfiniteJump(true) end
 if Config.AntiRagdollV2 then _G.startAntiRagdollV2(true) end
 if Config.AntiBeeDisco then _G.ANTI_BEE_DISCO.Enable() end
 
+-- ==========================================
+-- NOUVEAU : AUTO DESYNC ON LOAD
+-- ==========================================
+if Config.AutoDesyncOnLoad then
+    task.spawn(function()
+        task.wait(2) -- On attend 2 secondes que le personnage et RakNet soient bien chargés
+        if _G.toggleDesyncFunc then
+            MiscState.desyncEnabled = _G.toggleDesyncFunc(true)
+        end
+    end)
+end
+-- ==========================================
 local function getControls()
     return require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
 end
@@ -1670,288 +1684,185 @@ task.spawn(function()
 end)
 
 -- =========================================================
--- 🦾 AUTO BUY ENGINE (Bully Hub Extract - OPTIMIZED)
+-- AUTO BUY ENGINE (BULLYHUB HOVER & REMOTE PURCHASE)
 -- =========================================================
-do
-    local autoBuyActive = Config.AutoBuy or false
-    local ConveyorAnimals = {}
+local autoBuyActive = false
+local purchaseRemote = nil
 
+local function resolvePurchaseRemote()
+    if purchaseRemote and purchaseRemote.Parent then return purchaseRemote end
+    pcall(function()
+        local net = game.ReplicatedStorage:FindFirstChild("Packages") and game.ReplicatedStorage.Packages:FindFirstChild("Net")
+        if not net then return end
+        local kws = {"buy","purchase","animal","shop","acquire","conveyor"}
+        for _,v in ipairs(net:GetChildren()) do
+            local nl = (v.Name or ""):lower()
+            for _,kw in ipairs(kws) do
+                if nl:find(kw) then purchaseRemote=v; return end
+            end
+        end
+    end)
+    return purchaseRemote
+end
+
+local function firePurchaseNatural(prompt)
+    if not prompt or not prompt.Parent or not prompt.Enabled then return end
+    pcall(function()
+        if fireproximityprompt then fireproximityprompt(prompt) end
+    end)
     task.spawn(function()
-        local AnimData = require(Datas:WaitForChild("Animals"))
-        local AnimShared = require(Shared:WaitForChild("Animals"))
-        local NumUtils = require(Utils:WaitForChild("NumberUtils"))
-        
-        local RARITY_WORDS = {
-            common=true, uncommon=true, rare=true, epic=true, legendary=true, 
-            secret=true, divine=true, rainbow=true, cursed=true, gold=true, diamond=true
-        }
-        
-        local function getBrainrotName(model)
-            if not model then return "Brainrot","" end
-            local nameFound, genFound = "",""
-            
-            for _, bb in ipairs(model:GetDescendants()) do
-                if bb:IsA("BillboardGui") then
-                    for _, lbl in ipairs(bb:GetDescendants()) do
-                        if lbl:IsA("TextLabel") and lbl.Text and lbl.Text ~= "" then
-                            local t = lbl.Text:match("^%s*(.-)%s*$")
-                            local tl = t:lower()
-                            if RARITY_WORDS[tl] then continue end
-                            if t:match("^%$[%d%.]+[KkMmBb]?/s$") then
-                                if genFound=="" then genFound=t end
-                                continue
-                            end
-                            if t:match("^%$[%d%.]+[KkMmBb]?$") then continue end
-                            if t:match("^[%d%.]+[KkMmBb]?$") then continue end
-                            if nameFound=="" and #t>1 then nameFound=t end
-                        end
-                    end
-                end
-            end
-            
-            if nameFound=="" then
-                pcall(function()
-                    local info = AnimData[model.Name]
-                    if info and info.DisplayName then
-                        nameFound = info.DisplayName
-                        local gv = AnimShared:GetGeneration(model.Name,nil,nil,nil)
-                        genFound = "$"..NumUtils:ToString(gv).."/s"
-                    end
-                end)
-            end
-            
-            if nameFound=="" then nameFound = model.Name~="" and model.Name or "Brainrot" end
-            return nameFound,genFound
-        end
-
-        local function scanConveyor()
-             local results = {}
-            local plots = Workspace:FindFirstChild("Plots")
-            if not plots then return results end
-            
-            for _, obj in ipairs(plots:GetDescendants()) do
-                if not (obj:IsA("ProximityPrompt") and obj.Enabled) then continue end
-             local txt = obj.ActionText or ""
-                if not (txt=="Purchase" or txt:lower():find("purchase") or txt:lower():find("comprar")) then continue end
-                
-                local part = obj.Parent
-                if not part then continue end
-                
-                local realPart = part:IsA("Attachment") and part.Parent or part
-                if not (realPart and realPart:IsA("BasePart")) then continue end
-                
-                local model, cur = nil, realPart
-                for _ = 1, 8 do
-                    if cur and cur:IsA("Model") then model = cur; break end
-                    cur = cur and cur.Parent
-                end
-                
-                local name, gen = getBrainrotName(model)
-                table.insert(results, {
-                    name = name, 
-                    gen = gen, 
-                    prompt = obj, 
-                    part = realPart, 
-                    model = model, 
-                    source = "ESTEIRA", 
-                    uid = "esteira_"..tostring(obj)
-                })
-            end
-            return results
-        end
-
-        local function refreshConveyor()
-            local ok, found = pcall(scanConveyor)
-            if ok and found then ConveyorAnimals = found end
-        end
-        refreshConveyor()
-        _G.refreshConveyor = refreshConveyor
-
-        local purchaseRemote = nil
-        local function resolvePurchaseRemote()
-            if purchaseRemote and purchaseRemote.Parent then return purchaseRemote end
+        local remote = resolvePurchaseRemote()
+        if remote then
             pcall(function()
-                local net = ReplicatedStorage:FindFirstChild("Packages") and ReplicatedStorage.Packages:FindFirstChild("Net")
-                if not net then return end
-                local kws = {"buy", "purchase", "animal", "shop", "acquire", "conveyor"}
-                for _, v in ipairs(net:GetChildren()) do
-                    local nl = (v.Name or ""):lower()
-                    for _, kw in ipairs(kws) do
-                        if nl:find(kw) then purchaseRemote = v; return end
-                    end
+                if remote:IsA("RemoteFunction") then
+                    remote:InvokeServer(prompt.Parent)
+                elseif remote:IsA("RemoteEvent") then
+                    remote:FireServer(prompt.Parent)
                 end
             end)
-            return purchaseRemote
-        end
-
-        local function firePurchaseNatural(prompt)
-            if not prompt or not prompt.Parent or not prompt.Enabled then return end
-            pcall(function() if fireproximityprompt then fireproximityprompt(prompt) end end)
-            task.spawn(function()
-                local remote = resolvePurchaseRemote()
-                if remote then
-                    pcall(function()
-                        if remote:IsA("RemoteFunction") then remote:InvokeServer(prompt.Parent)
-                        elseif remote:IsA("RemoteEvent") then remote:FireServer(prompt.Parent) end
-                    end)
-                end
-            end)
-        end
-
-        local carpetLockConn = nil
-        local function startCarpetLock()
-            if carpetLockConn then carpetLockConn:Disconnect(); carpetLockConn = nil end
-            local function ensureCarpet()
-                pcall(function()
-                    local char = LocalPlayer.Character
-                    local hum = char and char:FindFirstChildOfClass("Humanoid")
-                    if not hum then return end
-                    local toolName = Config.TpSettings and Config.TpSettings.Tool or "Flying Carpet"
-                    if not char:FindFirstChild(toolName) then
-                        local tool = LocalPlayer.Backpack:FindFirstChild(toolName)
-                        if tool then hum:EquipTool(tool) end
-                    end
-                end)
-            end
-            task.spawn(function()
-                for _ = 1, 15 do
-                    if not autoBuyActive then break end
-                    ensureCarpet()
-                    task.wait(0.3)
-                    local char = LocalPlayer.Character
-                    local toolName = Config.TpSettings and Config.TpSettings.Tool or "Flying Carpet"
-                    if char and char:FindFirstChild(toolName) then break end
-                end
-            end)
-            carpetLockConn = RunService.Heartbeat:Connect(function()
-                if not autoBuyActive then return end
-                ensureCarpet()
-            end)
-        end
-        
-        local function stopCarpetLock()
-            if carpetLockConn then carpetLockConn:Disconnect(); carpetLockConn = nil end
-        end
-
-        local HOVER_HEIGHT = 5
-        local BUY_INTERVAL = 0.08
-        local DETECT_RADIUS = 17
-        local lockedTarget = nil
-        local lockedPart = nil
-        local lockedModel = nil
-        
-        local function partAlive() 
-            return lockedPart and lockedPart.Parent and lockedModel and lockedModel.Parent 
-        end
-        
-        local function promptAlive() 
-            return lockedTarget and lockedTarget.prompt and lockedTarget.prompt.Parent and lockedTarget.prompt.Enabled 
-        end
-
-        local bodyPos = nil
-        local function ensureBodyPos(hrp)
-            if bodyPos and bodyPos.Parent == hrp then return bodyPos end
-            if bodyPos then bodyPos:Destroy() end
-            local bp = Instance.new("BodyPosition", hrp)
-            bp.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            bp.P = 20000
-            bp.D = 1000
-            bp.Position = hrp.Position
-            bodyPos = bp
-            return bp
-        end
-        
-        local function destroyBodyPos()
-            if bodyPos then bodyPos:Destroy(); bodyPos = nil end
-        end
-
-        RunService.Heartbeat:Connect(function()
-            if not autoBuyActive or not partAlive() then 
-                destroyBodyPos()
-                return 
-            end
-            
-            local char = LocalPlayer.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if not hrp then destroyBodyPos(); return end
-            
-            local above = lockedPart.Position + Vector3.new(0, HOVER_HEIGHT, 0)
-            local bp = ensureBodyPos(hrp)
-            bp.Position = above
-        end)
-
-        task.spawn(function()
-            while true do
-                task.wait(BUY_INTERVAL)
-                if not autoBuyActive then continue end
-                if not partAlive() then continue end
-                 if promptAlive() then firePurchaseNatural(lockedTarget.prompt) end
-            end
-        end)
-
-        task.spawn(function()
-            while true do
-                task.wait(0.25)
-                if not autoBuyActive then 
-                    lockedTarget=nil
-                    lockedPart=nil
-                    lockedModel=nil
-                    stopCarpetLock()
-                    destroyBodyPos()
-                    continue 
-                end
-                
-                if lockedPart or lockedModel then
-                    if not partAlive() then
-                        lockedTarget=nil
-                        lockedPart=nil
-                        lockedModel=nil
-                    end
-                    continue
-                end
-                
-                local char = LocalPlayer.Character
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if not hrp then continue end
-                
-                local radius = DETECT_RADIUS
-                local best,bestDist = nil,math.huge
-                for _,entry in ipairs(ConveyorAnimals) do
-                    if entry.prompt and entry.prompt.Parent and entry.prompt.Enabled and entry.part and entry.part.Parent then
-                        local d = (hrp.Position - entry.part.Position).Magnitude
-                        if d <= radius and d < bestDist then
-                            bestDist=d
-                            best=entry
-                        end
-                    end
-                end
-                
-                if best then
-                    lockedTarget = best
-                    lockedPart = best.part
-                    lockedModel = best.model or best.part.Parent
-                    startCarpetLock()
-                end
-            end
-        end)
-
-        _G.AutoBuyOnToggle = function(active)
-            autoBuyActive = active
-            if active then
-                if _G.refreshConveyor then _G.refreshConveyor() end
-                startCarpetLock()
-            else
-                stopCarpetLock()
-                destroyBodyPos()
-            end
-        end
-
-        if Config.AutoBuy then
-            _G.AutoBuyOnToggle(true)
         end
     end)
 end
 
+local carpetLockConn = nil
+local function startCarpetLock()
+    if carpetLockConn then carpetLockConn:Disconnect(); carpetLockConn = nil end
+    local function ensureCarpet()
+        pcall(function()
+            local char = game.Players.LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            local toolName = Config.TpSettings and Config.TpSettings.Tool or "Flying Carpet"
+            if not char:FindFirstChild(toolName) then
+                local tool = game.Players.LocalPlayer.Backpack:FindFirstChild(toolName)
+                if tool then hum:EquipTool(tool) end
+            end
+        end)
+    end
+    task.spawn(function()
+        for _ = 1, 15 do
+            if not autoBuyActive then break end
+            ensureCarpet()
+            task.wait(0.3)
+        end
+    end)
+    carpetLockConn = game:GetService("RunService").Heartbeat:Connect(function()
+        if not autoBuyActive then return end
+        ensureCarpet()
+    end)
+end
+
+local function stopCarpetLock()
+    if carpetLockConn then carpetLockConn:Disconnect(); carpetLockConn = nil end
+end
+
+local HOVER_HEIGHT = 5
+local BUY_INTERVAL = 0.08
+local DETECT_RADIUS = Config.AutoBuyRange or 17
+local lockedTarget = nil
+local lockedPart = nil
+local lockedModel = nil
+
+local function partAlive()
+    return lockedPart and lockedPart.Parent and lockedModel and lockedModel.Parent
+end
+
+local function promptAlive()
+    return lockedTarget and lockedTarget.prompt and lockedTarget.prompt.Parent and lockedTarget.prompt.Enabled
+end
+
+local bodyPos = nil
+local function ensureBodyPos(hrp)
+    if bodyPos and bodyPos.Parent == hrp then return bodyPos end
+    if bodyPos then bodyPos:Destroy() end
+    local bp = Instance.new("BodyPosition", hrp)
+    bp.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bp.P = 20000
+    bp.D = 1000
+    bp.Position = hrp.Position
+    bodyPos = bp
+    return bp
+end
+
+local function destroyBodyPos()
+    if bodyPos then bodyPos:Destroy(); bodyPos = nil end
+end
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if not autoBuyActive or not partAlive() then destroyBodyPos(); return end
+    local char = game.Players.LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then destroyBodyPos(); return end
+    local above = lockedPart.Position + Vector3.new(0, HOVER_HEIGHT, 0)
+    local bp = ensureBodyPos(hrp)
+    bp.Position = above
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(BUY_INTERVAL)
+        if autoBuyActive and partAlive() and promptAlive() then
+            firePurchaseNatural(lockedTarget.prompt)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.25)
+        if not autoBuyActive then
+            lockedTarget=nil; lockedPart=nil; lockedModel=nil
+            stopCarpetLock()
+            destroyBodyPos()
+            continue
+        end
+        if lockedPart or lockedModel then
+            if not partAlive() then
+                lockedTarget=nil; lockedPart=nil; lockedModel=nil
+            end
+            continue
+        end
+        
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        local radius = Config.AutoBuyRange or DETECT_RADIUS
+        local best, bestDist = nil, math.huge
+        
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") and obj.Enabled then
+                local txt = obj.ActionText or ""
+                if txt == "Purchase" or txt:lower():find("purchase") or txt:lower():find("comprar") then
+                    local part = obj.Parent
+                    local realPart = part and (part:IsA("Attachment") and part.Parent or part)
+                    if realPart and realPart:IsA("BasePart") then
+                        local d = (hrp.Position - realPart.Position).Magnitude
+                        if d <= radius and d < bestDist then
+                            bestDist = d
+                            local cur = realPart
+                            local model = nil
+                            for _=1,8 do if cur and cur:IsA("Model") then model=cur break end cur = cur and cur.Parent end
+                            best = {prompt = obj, part = realPart, model = model}
+                        end
+                    end
+                end
+            end
+        end
+        
+        if best then
+            lockedTarget = best
+            lockedPart = best.part
+            lockedModel = best.model or best.part.Parent
+            startCarpetLock()
+        end
+    end
+end)
+
+-- Utilise ceci dans ton bouton On/Off de l'interface pour l'activer
+_G.ToggleBullyAutoBuy = function(state)
+    autoBuyActive = state
+end
+-- =========================================================
 -- =========================================================
 -- 🦾 ESP ENGINES
 -- =========================================================
@@ -2925,12 +2836,18 @@ CreateiOSToggle(pUi, "Show Target Panel", Config.VisibleTP or false, function(va
 CreateiOSToggle(pUi, "Show Admin Panel", Config.VisibleAdmin or false, function(val) Config.VisibleAdmin = val; if ADM then ADM.Visible = val end; SaveConfig() end)
 CreateiOSToggle(pUi, "Show Command Panel", Config.VisibleCommandPanel or false, function(val) Config.VisibleCommandPanel = val; if CMD then CMD.Visible = val end; SaveConfig() end)
 
-CreateSectionHeader(pMisc, "NETWORK")
+CreateSectionHeader(pMisc, "DESYNC")
 CreateiOSToggle(pMisc, "Enable Desync", MiscState.desyncEnabled, function(val)
     if _G.toggleDesyncFunc then
         MiscState.desyncEnabled = _G.toggleDesyncFunc(val)
     end
 end)
+-- NOUVEAU BOUTON : Auto Desync
+CreateiOSToggle(pMisc, "Auto Desync on Load", Config.AutoDesyncOnLoad or false, function(val)
+    Config.AutoDesyncOnLoad = val
+    SaveConfig()
+end)
+-- FIN NOUVEAU BOUTON
 CreateiOSToggle(pMisc, "Show Server Pos", MiscState.serverPosEnabled, function(val)
     MiscState.serverPosEnabled = val
     if _G.toggleServerPosFunc then _G.toggleServerPosFunc(val) end
@@ -2951,38 +2868,58 @@ end)
 
 CreateSectionHeader(pMisc, "CAMERA")
 CreateSettingsSlider(pMisc, "Field of View (FOV)", Config.FOV or 70, 30, 120, function(val) Config.FOV = val; SaveConfig(); _G.updateFOV(val) end)
+-- ==========================================
+-- AUTO STEAL DEFAULTS (CORRIGÉ ET SANS CRASH)
+-- ==========================================
+CreateSectionHeader(pMisc, "AUTO STEAL DEFAULTS")
 
--- ================= NEW UNLOCK EXTRAS =================
-CreateSectionHeader(pMisc, "EXTRAS")
-CreateiOSToggle(pMisc, "Auto Unlock On Steal", Config.AutoUnlockOnSteal or false, function(val)
-    Config.AutoUnlockOnSteal = val
-    SaveConfig()
-end)
+local tNea, tHig, tPri
 
-local UnlockGui
-CreateiOSToggle(pMisc, "Show Unlock Buttons (1-2-3)", Config.ShowUnlockButton or false, function(val)
-    Config.ShowUnlockButton = val
-    SaveConfig()
-    if UnlockGui then 
-        UnlockGui.Enabled = val 
+local function ForceStealDefault(mode, state)
+    if not state then return end -- Si on décoche, on ne fait rien
+    
+    -- 1. Met à jour les valeurs de sauvegarde
+    Config.DefaultToNearest = (mode == "NEAREST")
+    Config.DefaultToHighest = (mode == "HIGHEST")
+    Config.DefaultToPriority = (mode == "PRIORITY")
+
+    -- 2. Active immédiatement dans le script (plus besoin de relancer)
+    Config.StealNearest = (mode == "NEAREST")
+    Config.StealHighest = (mode == "HIGHEST")
+    Config.StealPriority = (mode == "PRIORITY")
+
+    if mode == "PRIORITY" or mode == "NEAREST" then
+        Config.AutoTPPriority = true
+    else
+        Config.AutoTPPriority = false
     end
-end)
 
-CreateSectionHeader(pMisc, "ADMIN / AUTOMATION")
-CreateiOSToggle(pMisc, "Auto Reset on Balloon", Config.AutoResetOnBalloon or false, function(val)
-    Config.AutoResetOnBalloon = val
+    -- 3. Décoche visuellement les autres boutons (avec un pcall pour être 100% sûr que ça ne crash pas)
+    pcall(function()
+        if mode == "NEAREST" then
+            if tHig and tHig.Update then tHig.Update(false, true) end
+            if tPri and tPri.Update then tPri.Update(false, true) end
+        elseif mode == "HIGHEST" then
+            if tNea and tNea.Update then tNea.Update(false, true) end
+            if tPri and tPri.Update then tPri.Update(false, true) end
+        elseif mode == "PRIORITY" then
+            if tNea and tNea.Update then tNea.Update(false, true) end
+            if tHig and tHig.Update then tHig.Update(false, true) end
+        end
+    end)
+
     SaveConfig()
-end)
-
-CreateiOSToggle(pMisc, "Click To Admin Panel", Config.ClickToAPActive or false, function(val)
-    Config.ClickToAPActive = val
-    if btnClickToAP then
-        btnClickToAP.Text = "Click to AP: " .. (val and "ON" or "OFF")
-        btnClickToAP.TextColor3 = val and Theme.AmberON or Theme.White
+    
+    -- 4. Actualise ton menu principal d'Auto Steal si possible
+    if SharedState.UpdateAutoStealUI then
+        pcall(SharedState.UpdateAutoStealUI)
     end
-    SaveConfig()
-end)
--- =====================================================
+end
+
+-- Création des 3 boutons avec tes vraies fonctions
+tNea = CreateiOSToggle(pMisc, "Default To Nearest", Config.DefaultToNearest or false, function(s) ForceStealDefault("NEAREST", s) end)
+tHig = CreateiOSToggle(pMisc, "Default To Highest", Config.DefaultToHighest or false, function(s) ForceStealDefault("HIGHEST", s) end)
+tPri = CreateiOSToggle(pMisc, "Default To Priority", Config.DefaultToPriority or false, function(s) ForceStealDefault("PRIORITY", s) end)-- =====================================================
 
 -- ================= NEW UNLOCK GUI ===================
 UnlockGui = Instance.new("ScreenGui")
@@ -4025,28 +3962,45 @@ task.spawn(function()
 end)
 
 -- =========================================================
--- [AUTO KICK LOGIC]
+-- AUTO KICK ON STEAL (BULLYHUB SECURE ENGINE)
 -- =========================================================
+local function kickPlayer()
+    local ok = pcall(function()
+        if game.Shutdown then
+            game:Shutdown()
+        else
+            game.Players.LocalPlayer:Kick("\nSCRULI HUB AMBER V3 - SECURE KICK")
+        end
+    end)
+    if not ok then
+        pcall(function() game.Players.LocalPlayer:Kick("\nSCRULI HUB AMBER V3 - SECURE KICK") end)
+    end
+end
+
 task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if not Config.AutoKickOnSteal then continue end
-        pcall(function()
-            for _, gui in ipairs(LocalPlayer.PlayerGui:GetDescendants()) do
-                local txt = (gui:IsA("TextLabel") or gui:IsA("TextButton")) and gui.Text
-                if txt then
-                    local lowerTxt = txt:lower()
-                    -- KICK INSTANTANÉ SEULEMENT SI TU AS RÉUSSI TON VOL
-                    if string.find(lowerTxt, "you stole") then
-                        LocalPlayer:Kick("\n🛡️ SCRULI HUB - AUTO KICK 🛡️\n kicked my nigga ❤️")
-                        break
-                    end
-                end
-            end
-        end)
+    local function checkSteal(gui)
+        if not Config.AutoKickOnSteal then return end
+        local txt = (gui:IsA("TextLabel") or gui:IsA("TextButton")) and gui.Text
+        if txt and string.find(txt, "You stole") then
+            kickPlayer()
+        end
+    end
+    
+    local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    PlayerGui.DescendantAdded:Connect(function(gui)
+        checkSteal(gui)
+        if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+            gui:GetPropertyChangedSignal("Text"):Connect(function()
+                checkSteal(gui)
+            end)
+        end
+    end)
+    
+    for _, gui in ipairs(PlayerGui:GetDescendants()) do
+        checkSteal(gui)
     end
 end)
-
 -- =========================================================
 -- [KEYBINDS GLOBAUX (SAFE EXECUTION)]
 -- =========================================================
