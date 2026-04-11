@@ -2128,18 +2128,26 @@ end
 
 local function MakeDraggable(topbar, frame, onDragEnd)
     local drag, start, pos
+    
     topbar.InputBegan:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
-            drag = true; start = i.Position; pos = frame.Position 
+        -- Ajout du support Touch
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
+            drag = true
+            start = i.Position
+            pos = frame.Position 
         end 
     end)
+    
     UserInputService.InputChanged:Connect(function(i) 
-        if drag and i.UserInputType == Enum.UserInputType.MouseMovement then 
+        -- Ajout du support Touch
+        if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then 
             frame.Position = UDim2.new(pos.X.Scale, pos.X.Offset+(i.Position.X-start.X), pos.Y.Scale, pos.Y.Offset+(i.Position.Y-start.Y)) 
         end 
     end)
+    
     UserInputService.InputEnded:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
+        -- Ajout du support Touch
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
             if drag and onDragEnd then onDragEnd(frame.Position) end
             drag = false 
         end 
@@ -3277,23 +3285,19 @@ apLay.Padding = UDim.new(0,6)
 apLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 -- ================= NOUVEAU DESIGN BOUTON ACTION =================
+-- ================= NOUVEAU DESIGN BOUTON ACTION =================
 local function CreateAction(text, col, cb)
     local b = Instance.new("TextButton", apCont)
     b.Size = UDim2.new(1,-10,0,36)
     b.BackgroundColor3 = col
     b.Text = text
     b.Font = Enum.Font.GothamBlack
-    b.TextColor3 = Theme.White
+    b.TextColor3 = Color3.fromRGB(255, 255, 255) -- Blanc pur garanti 🤍
     b.TextSize = 13
     b.AutoButtonColor = false
     Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
     
-    local grad = Instance.new("UIGradient", b)
-    grad.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, col),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(math.max(0, math.floor(col.R*255)-40), math.max(0, math.floor(col.G*255)-40), math.max(0, math.floor(col.B*255)-40)))
-    }
-    grad.Rotation = 90
+    -- Le UIGradient a été supprimé ici, c'est lui qui assombrissait ton texte !
     
     local str = Instance.new("UIStroke", b)
     str.Color = Theme.Stroke
@@ -3323,6 +3327,8 @@ local function CreateAction(text, col, cb)
     end)
     return b
 end
+-- ================================================================
+
 -- ================================================================
 
 local btnTp = CreateAction("Teleport ("..(Config.TpSettings.TpKey or "T")..")", Theme.Volcanic, function() 
@@ -4122,3 +4128,5 @@ task.spawn(function()
         end
     end
 end)
+
+print("scruli hub on top 📈")
