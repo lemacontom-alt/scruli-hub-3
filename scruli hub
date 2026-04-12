@@ -2129,10 +2129,19 @@ local function CreateSetPage(name, isFirst, order)
         page.Visible = true
     end)
     
-    RunService.Heartbeat:Connect(function() 
+   -- On met à jour la taille UNIQUEMENT quand le contenu change (et pas 60 fois par seconde !)
+    pLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         page.CanvasSize = UDim2.new(0, 0, 0, pLay.AbsoluteContentSize.Y + 10)
+    end)
+    
+    tabLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         tabScroll.CanvasSize = UDim2.new(0, tabLay.AbsoluteContentSize.X + 10, 0, 0) 
     end)
+    
+    -- On applique la taille une première fois au chargement
+    page.CanvasSize = UDim2.new(0, 0, 0, pLay.AbsoluteContentSize.Y + 10)
+    tabScroll.CanvasSize = UDim2.new(0, tabLay.AbsoluteContentSize.X + 10, 0, 0) 
+
     return page
 end
 
