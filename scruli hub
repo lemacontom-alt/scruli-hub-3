@@ -3801,26 +3801,32 @@ task.spawn(function()
     end
 end)
 -- =========================================================
--- 📱 MOBILE FIX : RÉPARATION DU SCROLL TACTILE
+-- 📱 MOBILE FIX : RÉPARATION DU SCROLL TACTILE (FORCE BRUTE)
 -- =========================================================
 task.spawn(function()
-    local function fixMobileScroll(obj)
-        if obj:IsA("TextButton") or obj:IsA("ImageButton") then
-            -- Empêche le bouton de "voler" le swipe tactile
-            obj.Active = false
-        elseif obj:IsA("ScrollingFrame") then
-            -- Assure que la zone de scroll capte bien le doigt
-            obj.Active = true
+    local function applyMobileScrollFix()
+        if not SG then return end
+        
+        for _, obj in ipairs(SG:GetDescendants()) do
+            if obj:IsA("GuiObject") then
+                if obj:IsA("ScrollingFrame") then
+                    obj.Active = true -- Autorise le scroll
+                elseif obj:IsA("TextBox") then
+                    obj.Active = true -- Autorise le clavier pour taper
+                else
+                    obj.Active = false -- DÉSACTIVE LA COLLISION TACTILE POUR TOUT LE RESTE
+                end
+            end
         end
     end
 
-    -- 1. Appliquer à toute l'interface existante (SG = ton ScreenGui principal)
-    if SG then
-        for _, obj in ipairs(SG:GetDescendants()) do
-            fixMobileScroll(obj)
-        end
-        -- 2. Appliquer automatiquement aux nouveaux boutons (nouvelles cibles, logs, etc.)
-        SG.DescendantAdded:Connect(fixMobileScroll)
+    -- On applique la réparation immédiatement
+    applyMobileScrollFix()
+    
+    -- On force la vérification en boucle (toutes les 2 secondes) 
+    -- Comme ça, même quand tu changes d'onglet, le scroll reste fluide !
+    while task.wait(2) do
+        applyMobileScrollFix()
     end
 end)
 
