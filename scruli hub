@@ -2081,6 +2081,8 @@ tabScroll.BackgroundTransparency = 1
 tabScroll.ScrollingDirection = Enum.ScrollingDirection.X
 tabScroll.ScrollBarThickness = 0
 tabScroll.BorderSizePixel = 0
+tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X -- NOUVEAU
+tabScroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- NOUVEAU
 
 local tabLay = Instance.new("UIListLayout", tabScroll)
 tabLay.FillDirection = Enum.FillDirection.Horizontal
@@ -2103,7 +2105,7 @@ local function CreateSetPage(name, isFirst, order)
     btn.TextScaled = false
     btn.LayoutOrder = order
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
+
     local page = Instance.new("ScrollingFrame", pagesContainer)
     page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundTransparency = 1
@@ -2111,10 +2113,10 @@ local function CreateSetPage(name, isFirst, order)
     page.ScrollBarThickness = 2
     page.ScrollBarImageColor3 = Theme.AmberMain
     page.BorderSizePixel = 0
-    local pLay = Instance.new("UIListLayout", page)
-    pLay.Padding = UDim.new(0, 6)
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y -- NOUVEAU
+    page.CanvasSize = UDim2.new(0, 0, 0, 0) -- NOUVEAU
     
-    btn.MouseButton1Click:Connect(function()
+btn.MouseButton1Click:Connect(function()
         for _, c in ipairs(tabScroll:GetChildren()) do 
             if c:IsA("TextButton") then 
                 c.BackgroundColor3 = Theme.Volcanic
@@ -2129,18 +2131,10 @@ local function CreateSetPage(name, isFirst, order)
         page.Visible = true
     end)
     
-   -- On met à jour la taille UNIQUEMENT quand le contenu change (et pas 60 fois par seconde !)
-    pLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0, 0, 0, pLay.AbsoluteContentSize.Y + 10)
-    end)
-    
-    tabLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        tabScroll.CanvasSize = UDim2.new(0, tabLay.AbsoluteContentSize.X + 10, 0, 0) 
-    end)
-    
-    -- On applique la taille une première fois au chargement
-    page.CanvasSize = UDim2.new(0, 0, 0, pLay.AbsoluteContentSize.Y + 10)
-    tabScroll.CanvasSize = UDim2.new(0, tabLay.AbsoluteContentSize.X + 10, 0, 0) 
+    -- 👉 REMET CES 3 LIGNES ICI POUR RANGER LES BOUTONS :
+    local pLay = Instance.new("UIListLayout", page)
+    pLay.Padding = UDim.new(0, 6)
+    pLay.SortOrder = Enum.SortOrder.LayoutOrder
 
     return page
 end
@@ -2702,6 +2696,8 @@ tpScroll.BackgroundTransparency = 1
 tpScroll.ScrollBarThickness = 2
 tpScroll.ScrollBarImageColor3 = Theme.AmberMain
 tpScroll.BorderSizePixel = 0
+tpScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y -- NOUVEAU
+tpScroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- NOUVEAU
 
 local tpLay = Instance.new("UIListLayout", tpScroll)
 tpLay.Padding = UDim.new(0, 8)
@@ -2846,7 +2842,7 @@ function updateTargetListUI()
             end
         end
         
-        tpScroll.CanvasSize = UDim2.new(0, 0, 0, tpLay.AbsoluteContentSize.Y + 10)
+        
     end)
 end
 
@@ -3443,6 +3439,8 @@ admScroll.BackgroundTransparency = 1
 admScroll.ScrollBarThickness = 2
 admScroll.ScrollBarImageColor3 = Theme.AmberMain
 admScroll.BorderSizePixel = 0
+admScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y -- NOUVEAU
+admScroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- NOUVEAU
 
 local admLay = Instance.new("UIListLayout", admScroll)
 admLay.Padding = UDim.new(0, 6)
@@ -3618,7 +3616,7 @@ local function refreshAdminPanel()
         createAdminRow(p) 
     end
     
-    admScroll.CanvasSize = UDim2.new(0, 0, 0, admLay.AbsoluteContentSize.Y + 10)
+    
 end
 
 task.spawn(function() 
@@ -3809,36 +3807,6 @@ task.spawn(function()
         end
     end
 end)
--- =========================================================
--- 📱 MOBILE FIX : RÉPARATION DU SCROLL TACTILE (FORCE BRUTE)
--- =========================================================
-task.spawn(function()
-    local function applyMobileScrollFix()
-        if not SG then return end
-        
-        for _, obj in ipairs(SG:GetDescendants()) do
-            if obj:IsA("GuiObject") then
-                if obj:IsA("ScrollingFrame") then
-                    obj.Active = true -- Autorise le scroll
-                elseif obj:IsA("TextBox") then
-                    obj.Active = true -- Autorise le clavier pour taper
-                else
-                    obj.Active = false -- DÉSACTIVE LA COLLISION TACTILE POUR TOUT LE RESTE
-                end
-            end
-        end
-    end
-
-    -- On applique la réparation immédiatement
-    applyMobileScrollFix()
-    
-    -- On force la vérification en boucle (toutes les 2 secondes) 
-    -- Comme ça, même quand tu changes d'onglet, le scroll reste fluide !
-    while task.wait(2) do
-        applyMobileScrollFix()
-    end
-end)
-
 -- =========================================================
 -- 🦾 AUTO TP BACK TO BRAINROT (STANDALONE ENGINE)
 -- =========================================================
