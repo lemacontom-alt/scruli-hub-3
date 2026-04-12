@@ -182,299 +182,27 @@ local PRIORITY_LIST = {
    "Chillin Chili", "Tuff Toucan", "W or L", "Chipso and Queso"
 }
 
--- =========================================================
--- 🦾 DESYNC & SERVER POS ENGINE 
--- =========================================================
+
+
 local toggleDesyncFunc
 do
     local hooked = false
-    local ghostModel = nil
-    local groundParts = {}
-    local attachments = {}
-    local vfxConn = nil
+    local currentHook = nil
 
-    local PI2 = math.pi * 2
-    local OUTER_RADIUS = 3.2
-    local INNER_RADIUS = 1.8
-    local OUTER_SPEED = 2.5
-    local INNER_SPEED = -3.5
-    local GROUND_OFFSET = 3.1
-    local SPARK_INTERVAL = 0.05
-
-    local lightningColor = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 180, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 40, 200)),
-    })
-
-    local sparkSize = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.18),
-        NumberSequenceKeypoint.new(0.5, 0.08),
-        NumberSequenceKeypoint.new(1, 0),
-    })
-
-    local ringSizeOuter = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.1),
-        NumberSequenceKeypoint.new(1, 0),
-    })
-
-    local ringSizeInner = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.07),
-        NumberSequenceKeypoint.new(1, 0),
-    })
-
-    local function removeGhost()
-        if vfxConn then
-            vfxConn:Disconnect()
-            vfxConn = nil
-        end
-        for _, p in ipairs(groundParts) do
-            if p.dot and p.dot.Parent then
-                p.dot:Destroy()
-            end
-        end
-        groundParts = {}
-        attachments = {}
-        if ghostModel then
-            ghostModel:Destroy()
-            ghostModel = nil
-        end
-    end
-
-    local function rakhook(packet)
-        if packet.PacketId == 0x1B then
-            local buf = packet.AsBuffer
-            buffer.writeu32(buf, 1, 0xFFFFFFFF)
-            packet:SetData(buf)
-        end
-    end
-
-    local function makeSparks(parent)
-        local att = Instance.new("Attachment")
-        att.Parent = parent
-        local sparks = Instance.new("ParticleEmitter")
-        sparks.Color = lightningColor
-        sparks.LightEmission = 1
-        sparks.LightInfluence = 0
-        sparks.Size = sparkSize
-        sparks.Lifetime = NumberRange.new(0.1, 0.3)
-        sparks.Rate = 0
-        sparks.Speed = NumberRange.new(5, 20)
-        sparks.SpreadAngle = Vector2.new(180, 180)
-        sparks.RotSpeed = NumberRange.new(-360, 360)
-        sparks.Rotation = NumberRange.new(0, 360)
-        sparks.Parent = att
-        return att
-    end
-
-    local function makeRingDot(px, py, pz, sz, col, sparksSize)
-        local dot = Instance.new("Part")
-        dot.Anchored = true
-        dot.CanCollide = false
-        dot.CanTouch = false
-        dot.CanQuery = false
-        dot.CastShadow = false
-        dot.Size = Vector3.new(sz, sz, sz)
-        dot.Shape = Enum.PartType.Ball
-        dot.Material = Enum.Material.Neon
-        dot.Color = col
-        dot.Transparency = 0
-        dot.CFrame = CFrame.new(px, py, pz)
-        dot.Parent = Workspace
-        local att = Instance.new("Attachment")
-        att.Parent = dot
-        local em = Instance.new("ParticleEmitter")
-        em.Color = lightningColor
-        em.LightEmission = 1
-        em.LightInfluence = 0
-        em.Size = sparksSize
-        em.Lifetime = NumberRange.new(0.1, 0.2)
-        em.Rate = 10
-        em.Speed = NumberRange.new(1, 5)
-        em.SpreadAngle = Vector2.new(180, 180)
-        em.Parent = att
-        return dot
-    end
-
-    local function createGhost(pos)
-        removeGhost()
-
-        local char = LocalPlayer.Character
-        if not char then return end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        local offset = pos - hrp.Position
-
-        char.Archivable = true
-        local ghost = char:Clone()
-        char.Archivable = false
-        if not ghost then return end
-
-        ghost.Name = "GhostMarker"
-
-        for _, v in ipairs(ghost:GetDescendants()) do
-            pcall(function()
-                if v:IsA("Script") or v:IsA("LocalScript") or v:IsA("ModuleScript") or v:IsA("Animator") or v:IsA("AnimationController") then
-                    v:Destroy()
-                end
-            end)
-        end
-
-        local hum = ghost:FindFirstChildOfClass("Humanoid")
-        if hum then hum:Destroy() end
-
-        for _, v in ipairs(ghost:GetDescendants()) do
-            pcall(function()
-                if v:IsA("BasePart") then
-                    v.Anchored = true
-                    v.CanCollide = false
-                    v.CanTouch = false
-                    v.CanQuery = false
-                    v.CastShadow = false
-                    v.Transparency = 0
-                    v.Material = Enum.Material.SmoothPlastic
-                    v.Color = Color3.fromRGB(0, 20, 80)
-                    v.CFrame = v.CFrame + offset
-                    if v.Name ~= "HumanoidRootPart" then
-                        for e = 1, 3 do
-                            local att = makeSparks(v)
-                            table.insert(attachments, att)
-                        end
-                    end
-                end
-            end)
-        end
-
-        local ghostHRP = ghost:FindFirstChild("HumanoidRootPart")
-        if ghostHRP then
-            ghostHRP.Transparency = 1
-            ghostHRP.CFrame = CFrame.new(pos) * (hrp.CFrame - hrp.CFrame.Position)
-        end
-
-        local hl = Instance.new("Highlight")
-        hl.FillColor = Color3.fromRGB(0, 60, 180)
-        hl.FillTransparency = 0
-        hl.OutlineColor = Color3.fromRGB(0, 120, 255)
-        hl.OutlineTransparency = 0
-        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        hl.Adornee = ghost
-        hl.Parent = ghost
-
-        ghost.Parent = Workspace
-        ghostModel = ghost
-
-        for _, v in ipairs(ghost:GetDescendants()) do
-            if v:IsA('BasePart') then
-                v.CanCollide = false
-                v.CanTouch = false
-                v.CanQuery = false
-            end
-        end
-        for _, v in ipairs(ghost:GetChildren()) do
-            if v:IsA('BasePart') then
-                v.CanCollide = false
-                v.CanTouch = false
-                v.CanQuery = false
-            end
-        end
-
-        local rCount = 32
-        local iCount = 20
-        local gy = pos.Y - GROUND_OFFSET
-        local outerCol = Color3.fromRGB(0, 100, 255)
-        local innerCol = Color3.fromRGB(150, 210, 255)
-
-        for i = 1, rCount do
-            local a = (i / rCount) * PI2
-            local dot = makeRingDot(pos.X + math.cos(a) * OUTER_RADIUS, gy, pos.Z + math.sin(a) * OUTER_RADIUS, 0.25, outerCol, ringSizeOuter)
-            table.insert(groundParts, {dot = dot, baseAngle = a, isOuter = true})
-        end
-
-        for i = 1, iCount do
-            local a = (i / iCount) * PI2
-            local dot = makeRingDot(pos.X + math.cos(a) * INNER_RADIUS, gy, pos.Z + math.sin(a) * INNER_RADIUS, 0.15, innerCol, ringSizeInner)
-            table.insert(groundParts, {dot = dot, baseAngle = a, isOuter = false})
-        end
-
-        local sparkTimer = 0
-
-        vfxConn = RunService.Heartbeat:Connect(function(dt)
-            if not ghostModel or not ghostModel.Parent then return end
-            local t = tick()
-            local pulse = math.abs(math.sin(t * 2))
-            local fillG = math.floor(40 + pulse * 30)
-            local fillB = math.floor(160 + pulse * 60)
-            local outG = math.floor(100 + pulse * 60)
-
-            hl.FillColor = Color3.fromRGB(0, fillG, fillB)
-            hl.OutlineColor = Color3.fromRGB(0, outG, 255)
-            hl.OutlineTransparency = pulse * 0.3
-
-            for _, entry in ipairs(groundParts) do
-                if entry.dot and entry.dot.Parent then
-                    local radius = entry.isOuter and OUTER_RADIUS or INNER_RADIUS
-                    local speed = entry.isOuter and OUTER_SPEED or INNER_SPEED
-                    local a = entry.baseAngle + t * speed
-                    local wave = math.abs(math.sin(t * 5 + entry.baseAngle)) * 0.2
-                    local bright = math.abs(math.sin(t * 6 + entry.baseAngle)) * 0.4
-                    entry.dot.CFrame = CFrame.new(pos.X + math.cos(a) * radius, gy + wave, pos.Z + math.sin(a) * radius)
-                    entry.dot.Transparency = bright
-                    if entry.isOuter then
-                        local r = math.floor(80 + pulse * 60)
-                        entry.dot.Color = Color3.fromRGB(0, r, 255)
-                    else
-                        local r = math.floor(120 + pulse * 60)
-                        local g = math.floor(180 + pulse * 40)
-                        entry.dot.Color = Color3.fromRGB(r, g, 255)
-                    end
-                end
-            end
-
-            sparkTimer = sparkTimer + dt
-            if sparkTimer >= SPARK_INTERVAL then
-                sparkTimer = 0
-                local numAtts = #attachments
-                if numAtts > 0 then
-                    local bursts = math.random(2, 5)
-                    for b = 1, bursts do
-                        local pick = attachments[math.random(1, numAtts)]
-                        if pick and pick.Parent then
-                            local emitter = pick:FindFirstChildOfClass("ParticleEmitter")
-                            if emitter then emitter:Emit(math.random(8, 25)) end
-                        end
-                    end
-                end
-                for _, v in ipairs(ghostModel:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = false
-                        v.CanTouch = false
-                        v.CanQuery = false
-                        v.Anchored = true
-                    end
-                end
-            end
-        end)
-    end
-toggleDesyncFunc = function(state)
+    toggleDesyncFunc = function(state)
         local raknet = getgenv and getgenv().raknet
         if not raknet then 
             warn("ScruliHub: RakNet non supporté sur cet exécuteur.")
             return false
         end
+
         if state == nil then state = not hooked end
         if state == hooked then return state end
         
-        -- Détection : Mobile ou PC ?
+        local UserInputService = game:GetService("UserInputService")
         local isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
         
         if state then
-            local char = LocalPlayer.Character
-            if not char then return false end
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if not hrp then return false end
-            createGhost(hrp.Position)
-            
             if isMobile and raknet.desync ~= nil then
                 -- POUR MOBILE
                 pcall(function()
@@ -485,8 +213,18 @@ toggleDesyncFunc = function(state)
                     end
                 end)
             else
-                -- POUR PC (Garde le hook d'origine)
-                pcall(function() raknet.add_send_hook(rakhook) end)
+                -- POUR PC (FONCTION VXNTA PURE)
+                if not currentHook then
+                    pcall(function()
+                        currentHook = raknet.add_send_hook(function(packet)
+                            if packet.PacketId == 0x1B then
+                                local data = packet.AsBuffer
+                                buffer.writeu32(data, 1, 0xFFFFFFFF)
+                                packet:SetData(data)
+                            end
+                        end)
+                    end)
+                end
             end
         else
             if isMobile and raknet.desync ~= nil then
@@ -499,84 +237,18 @@ toggleDesyncFunc = function(state)
                     end
                 end)
             else
-                -- POUR PC (Enlève le hook d'origine)
-                pcall(function() raknet.remove_send_hook(rakhook) end)
+                -- POUR PC (DÉSACTIVATION)
+                if currentHook then
+                    pcall(function() raknet.remove_send_hook(currentHook) end)
+                    currentHook = nil
+                end
             end
-            removeGhost()
         end
+        
         hooked = state
         return hooked
     end
     _G.toggleDesyncFunc = toggleDesyncFunc
-end -- <-- C'EST CE 'END' QUI MANQUAIT POUR REPARER L'ERREUR DU 'DO' !
-local lastServerPos = Vector3.new()
-local serverPosPart = nil
-local serverPosPart = nil
-local serverPosLoop = nil
-
-_G.toggleServerPosFunc = function(state)
-    if not state then
-        if serverPosPart then serverPosPart:Destroy(); serverPosPart = nil end
-        if serverPosLoop then serverPosLoop:Disconnect(); serverPosLoop = nil end
-        return false
-    end
-
-    if serverPosPart then serverPosPart:Destroy() end
-    
-    serverPosPart = Instance.new("Part")
-    serverPosPart.Name = "XiServerPos"
-    serverPosPart.Size = Vector3.new(2.5, 2.5, 2.5)
-    serverPosPart.Shape = Enum.PartType.Ball
-    serverPosPart.Material = Enum.Material.ForceField
-    serverPosPart.Color = Color3.fromRGB(0, 255, 255)
-    serverPosPart.Anchored = true
-    serverPosPart.CanCollide = false
-    serverPosPart.CastShadow = false
-    serverPosPart.Parent = workspace
-
-    local bb = Instance.new("BillboardGui", serverPosPart)
-    bb.Size = UDim2.new(0, 100, 0, 20)
-    bb.StudsOffset = Vector3.new(0, 2, 0)
-    bb.AlwaysOnTop = true
-    
-    local lbl = Instance.new("TextLabel", bb)
-    lbl.Size = UDim2.new(1, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = "SERVER POS"
-    lbl.TextColor3 = Color3.fromRGB(0, 255, 255)
-    lbl.Font = Enum.Font.GothamBlack
-    lbl.TextSize = 12
-
-    local RunService = game:GetService("RunService")
-    
-    serverPosLoop = RunService.RenderStepped:Connect(function()
-        local char = game.Players.LocalPlayer.Character
-        if not char then return end
-        
-        -- 1. Si tu as utilisé le "Invisible Steal", ton VRAI root est caché dans la caméra.
-        local oldRoot = workspace.CurrentCamera:FindFirstChild("HumanoidRootPart")
-        
-        -- 2. Si tu utilises le vrai Desync, tu as un fantôme créé sur la map.
-        local lagbackGhost = workspace.CurrentCamera:FindFirstChild("LagbackGhost") or workspace:FindFirstChild("LagbackGhost")
-        
-        if serverPosPart then
-            if oldRoot then
-                -- Le serveur te voit sur le oldRoot (qui a les animations/CFrame modifiés)
-                serverPosPart.CFrame = oldRoot.CFrame
-            elseif lagbackGhost and hooked then
-                -- Le serveur te voit là où le paquet a été drop (le fantôme)
-                serverPosPart.CFrame = lagbackGhost.CFrame
-            else
-                -- Si tu n'es pas desync, le serveur te voit sur ton HRP normal
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    serverPosPart.CFrame = hrp.CFrame
-                end
-            end
-        end
-    end)
-    
-    return true
 end
 -- =========================================================
 -- 🦾 NOTIFICATIONS LETHAL HUB
@@ -4127,6 +3799,89 @@ task.spawn(function()
             scale3.Scale = 0.5
         end
     end
+end)
+-- =========================================================
+-- 📱 MOBILE FIX : RÉPARATION DU SCROLL TACTILE
+-- =========================================================
+task.spawn(function()
+    local function fixMobileScroll(obj)
+        if obj:IsA("TextButton") or obj:IsA("ImageButton") then
+            -- Empêche le bouton de "voler" le swipe tactile
+            obj.Active = false
+        elseif obj:IsA("ScrollingFrame") then
+            -- Assure que la zone de scroll capte bien le doigt
+            obj.Active = true
+        end
+    end
+
+    -- 1. Appliquer à toute l'interface existante (SG = ton ScreenGui principal)
+    if SG then
+        for _, obj in ipairs(SG:GetDescendants()) do
+            fixMobileScroll(obj)
+        end
+        -- 2. Appliquer automatiquement aux nouveaux boutons (nouvelles cibles, logs, etc.)
+        SG.DescendantAdded:Connect(fixMobileScroll)
+    end
+end)
+
+-- =========================================================
+-- 🦾 AUTO TP BACK TO BRAINROT (STANDALONE ENGINE)
+-- =========================================================
+task.spawn(function()
+    local lastRagdollTime = 0
+    
+    local function setupAutoTpBack(char)
+        local hum = char:WaitForChild("Humanoid", 5)
+        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+        if not hum or not hrp then return end
+        
+        hum.StateChanged:Connect(function(oldState, newState)
+            -- On vérifie si l'option est activée et si on a bien une cible en cours
+            if not Config.AutoTpOnFailedSteal then return end
+            if not SharedState.SelectedPetData then return end
+            if State.isTpMoving then return end -- On ignore si on est déjà en train de se TP via runAutoSnipe
+            
+            -- Si on détecte qu'on tombe ou qu'on se fait ragdoll (coup de batte, tourelle)
+            if newState == Enum.HumanoidStateType.Ragdoll or newState == Enum.HumanoidStateType.FallingDown or newState == Enum.HumanoidStateType.Physics then
+                
+                local now = tick()
+                if now - lastRagdollTime < 0.5 then return end -- Cooldown pour éviter le spam
+                lastRagdollTime = now
+                
+                task.spawn(function()
+                    task.wait(0.15) -- On attend une fraction de seconde pour laisser ton propre Anti-Ragdoll agir
+                    
+                    local plotObj = Workspace.Plots:FindFirstChild(SharedState.SelectedPetData.plot)
+                    if plotObj and plotObj:FindFirstChild("AnimalPodiums") then
+                        local pod = plotObj.AnimalPodiums:FindFirstChild(SharedState.SelectedPetData.slot)
+                        local base = pod and pod:FindFirstChild("Base")
+                        local targetPart = base and (base:FindFirstChild("Spawn") or base)
+                        
+                        if targetPart and hrp and hrp.Parent then
+                            -- 1. Arrête la vitesse de l'éjection pour ne pas glisser
+                            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            
+                            -- 2. Si on a été éjecté pas trop loin (< 150 studs), on se re-téléporte instantanément
+                            if (hrp.Position - targetPart.Position).Magnitude < 150 then
+                                hrp.CFrame = CFrame.new(targetPart.Position)
+                            else
+                                -- 3. Si on s'est fait envoyer super loin, on relance le processus de TP complet
+                                if runAutoSnipe then pcall(runAutoSnipe) end
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    end
+    
+    -- On l'attache au personnage actuel
+    if LocalPlayer.Character then
+        setupAutoTpBack(LocalPlayer.Character)
+    end
+    
+    -- On s'assure qu'il se réattache si tu meurs/reset
+    LocalPlayer.CharacterAdded:Connect(setupAutoTpBack)
 end)
 
 print("scruli hub on top 📈")
