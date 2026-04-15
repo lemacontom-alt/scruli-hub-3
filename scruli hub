@@ -2850,7 +2850,7 @@ CreateiOSToggle(pEsp, "Player ESP (Hides Names)", Config.PlayerESP or false, fun
 CreateiOSToggle(pEsp, "Brainrot ESP", Config.BrainrotESP or false, function(val) Config.BrainrotESP = val; if not val and _G.clearBrainrotESP then _G.clearBrainrotESP() end; SaveConfig() end)
 CreateiOSToggle(pEsp, "Subspace Mine Esp", Config.SubspaceMineESP or false, function(val) Config.SubspaceMineESP = val; if not val and _G.clearSubspaceMines then _G.clearSubspaceMines() end; SaveConfig() end)
 CreateiOSToggle(pEsp, "Duel Base ESP", Config.DuelBaseESP or false, function(val) Config.DuelBaseESP = val; if not val and _G.clearDuelBaseVisuals then _G.clearDuelBaseVisuals() end; SaveConfig() end)
-CreateiOSToggle(pEsp, "Steal Radar ESP", Config.StealRadarESP or false, function(val) Config.StealRadarESP = val; if not val and _G.clearStealRadarESP then _G.clearStealRadarESP() end; SaveConfig() end)
+CreateiOSToggle(pEsp, "Stealer ESP", Config.StealRadarESP or false, function(val) Config.StealRadarESP = val; if not val and _G.clearStealRadarESP then _G.clearStealRadarESP() end; SaveConfig() end)
 
 CreateSectionHeader(pEsp, "ALERTS SETTINGS")
 CreateiOSToggle(pEsp, "Priority Pet Alerts", Config.AlertsEnabled or false, function(val) Config.AlertsEnabled = val; SaveConfig() end)
