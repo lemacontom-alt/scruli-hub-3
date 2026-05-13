@@ -8,15 +8,13 @@ if not game:IsLoaded() then
     repeat task.wait() until game:IsLoaded()
 end
 
-Players          = game:GetService("Players")
-UserInputService = game:GetService("UserInputService")
-RunService       = game:GetService("RunService")
-CoreGui          = game:GetService("CoreGui")
-RS               = game:GetService("ReplicatedStorage")
-LocalPlayer      = Players.LocalPlayer
-
-SellRemote = nil
-pcall(function()
+local Players          = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService       = game:GetService("RunService")
+local CoreGui          = game:GetService("CoreGui")
+local RS               = game:GetService("ReplicatedStorage")
+local LocalPlayer      = Players.LocalPlayer
+local SellRemote; pcall(function()
     SellRemote = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvents")
         and game:GetService("ReplicatedStorage").RemoteEvents:FindFirstChild("PlotService/Sell")
     if not SellRemote then
@@ -25,14 +23,14 @@ pcall(function()
     end
 end)
 
-_syncChannel = nil
+local _syncChannel = nil
 pcall(function()
     local sync = require(RS.Packages.Synchronizer)
     sync:WaitAndCall(LocalPlayer, function(ch)
         _syncChannel = ch
     end)
 end)
-function GetSyncChannel()
+local function GetSyncChannel()
     if _syncChannel then return _syncChannel end
     pcall(function()
         local sync = require(RS.Packages.Synchronizer)
@@ -41,7 +39,7 @@ function GetSyncChannel()
     return _syncChannel
 end
 
-function GetSafeParent()
+local function GetSafeParent()
     if typeof(gethui)=="function" then
         local ok,h=pcall(gethui); if ok and h then return h end
     end
@@ -50,18 +48,17 @@ function GetSafeParent()
     return CoreGui
 end
 
-
--- [ SCRULI HUB THEME ]
-BG      = Color3.fromRGB(15, 15, 15) -- Noir profond
-SURFACE = Color3.fromRGB(22, 22, 22) -- Gris anthracite
-ACCENT  = Color3.fromRGB(220, 20, 60) -- Rouge Scruli
-BORDER  = Color3.fromRGB(45, 45, 45)
-TEXT    = Color3.fromRGB(240, 240, 240)
-SUBTEXT = Color3.fromRGB(140, 140, 140)
-ITEMHOV = Color3.fromRGB(26, 26, 26)
-ITEMSEL = Color3.fromRGB(80, 10, 20)
-BTNRED  = Color3.fromRGB(180, 30, 30)
-BTNGRN  = Color3.fromRGB(220, 20, 60)
+-- ── THEME ────────────────────────────────────────────────
+local BG      = Color3.fromRGB(10,10,10)
+local SURFACE = Color3.fromRGB(18,14,8)
+local ACCENT  = Color3.fromRGB(255,120,0)
+local BORDER  = Color3.fromRGB(90,45,10)
+local TEXT    = Color3.fromRGB(255,245,230)
+local SUBTEXT = Color3.fromRGB(180,120,60)
+local ITEMHOV = Color3.fromRGB(30,18,8)
+local ITEMSEL = Color3.fromRGB(80,38,0)
+local BTNRED  = Color3.fromRGB(200,50,30)
+local BTNGRN  = Color3.fromRGB(20,180,80)
 
 local RARITY_COLORS = {
     Common              = Color3.fromRGB(0,171,40),
@@ -90,7 +87,7 @@ local MUTATION_PALETTES = {
     Candy       = {Color3.fromRGB(255,105,180), Color3.fromRGB(255,182,193),Color3.fromRGB(200,50,150),Color3.fromRGB(255,20,147), Color3.fromRGB(255,200,220),Color3.fromRGB(255,240,245)},
     Lava        = {Color3.fromRGB(200,50,0),    Color3.fromRGB(255,100,0),  Color3.fromRGB(150,20,0),  Color3.fromRGB(100,10,0),   Color3.fromRGB(255,160,0),  Color3.fromRGB(255,220,100)},
     Galaxy      = {Color3.fromRGB(60,0,120),    Color3.fromRGB(100,0,180),  Color3.fromRGB(30,0,80),   Color3.fromRGB(180,0,255),  Color3.fromRGB(80,0,160),   Color3.fromRGB(200,150,255)},
-    YinYang     = {BG, Color3.fromRGB(20,20,28),Color3.fromRGB(230,230,240),     Color3.fromRGB(230,230,240),   Color3.fromRGB(128,128,128),Color3.fromRGB(24,24,30)},
+    YinYang     = {BG, Color3.fromRGB(20,20,28),Color3.fromRGB(255,245,230),     Color3.fromRGB(255,245,230),   Color3.fromRGB(128,128,128),Color3.fromRGB(18,14,8)},
     Radioactive = {Color3.fromRGB(100,255,0),   Color3.fromRGB(150,255,50), Color3.fromRGB(50,200,0),  Color3.fromRGB(0,150,0),    Color3.fromRGB(200,255,100),Color3.fromRGB(230,255,180)},
     Cursed      = {Color3.fromRGB(255,23,23),   Color3.fromRGB(180,0,0),    Color3.fromRGB(120,0,0),   Color3.fromRGB(80,0,0),     Color3.fromRGB(255,100,100),Color3.fromRGB(255,180,180)},
     Divine      = {Color3.fromRGB(255,215,0),   Color3.fromRGB(255,255,200),Color3.fromRGB(200,160,0), Color3.fromRGB(255,240,150),BG,Color3.fromRGB(255,250,220)},
@@ -164,7 +161,7 @@ local TRAIT_ICONS = {
 -- "John Pork" trait reskins any brainrot wearing it to mimic the real game's
 -- "John Pork is Calling..." event — the overhead nametag gets a suffix.
 -- Accepts either array form {"Galactic","John Pork"} or hash form {[name]=true}.
-function _hasJohnPorkTrait(traits)
+local function _hasJohnPorkTrait(traits)
     if type(traits) ~= "table" then return false end
     if traits["John Pork"] then return true end
     for _, t in ipairs(traits) do
@@ -173,7 +170,7 @@ function _hasJohnPorkTrait(traits)
     return false
 end
 
-function _displayNameFor(name, traits)
+local function _displayNameFor(name, traits)
     if not name or name == "" then return name end
     if _hasJohnPorkTrait(traits) then
         return name .. " is Calling..."
@@ -193,7 +190,7 @@ end
 local _animSyncEpoch = tick()
 local _ANIM_SYNC_THRESHOLD = 0.1
 
-function _syncModelAnimations(model)
+local function _syncModelAnimations(model)
     if not model or not model.Parent then return end
     pcall(function()
         local controller = model:FindFirstChildWhichIsA("Humanoid", true)
@@ -218,17 +215,17 @@ function _syncModelAnimations(model)
     end)
 end
 
-function SafeSet(o,p,v) pcall(function() o[p]=v end) end
-function New(cls,props)
+local function SafeSet(o,p,v) pcall(function() o[p]=v end) end
+local function New(cls,props)
     local ok,obj=pcall(Instance.new,cls)
     if not ok or not obj then return nil end
     if props then for k,v in pairs(props) do SafeSet(obj,k,v) end end
     return obj
 end
-function Corner(p,r)
+local function Corner(p,r)
     local c=Instance.new("UICorner"); c.CornerRadius=UDim.new(0,r or 6); c.Parent=p; return c
 end
-function MakeDraggable(frame,handle)
+local function MakeDraggable(frame,handle)
     handle=handle or frame
     local drag,ds,sp
     handle.InputBegan:Connect(function(i)
@@ -246,9 +243,9 @@ function MakeDraggable(frame,handle)
         end
     end)
 end
-function SectionHeader(parent,text,yPos)
+local function SectionHeader(parent,text,yPos)
     New("Frame",{Size=UDim2.new(0,3,0,14),Position=UDim2.new(0,10,0,yPos+2),BackgroundColor3=ACCENT,BorderSizePixel=0,Parent=parent})
-    New("TextLabel",{Size=UDim2.new(1,-28,0,18),Position=UDim2.new(0,18,0,yPos),Text=text:upper(),TextColor3=Color3.fromRGB(230,230,240),Font=Enum.Font.GothamBold,TextSize=9,BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,Parent=parent})
+    New("TextLabel",{Size=UDim2.new(1,-28,0,18),Position=UDim2.new(0,18,0,yPos),Text=text:upper(),TextColor3=Color3.fromRGB(255,245,230),Font=Enum.Font.Code,TextSize=9,BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,Parent=parent})
 end
 
 -- ── PLOT HELPERS ─────────────────────────────────────────
@@ -256,7 +253,7 @@ end
 -- "your" plot for everything (spawning, base skins, lasers, prompts, etc.).
 -- Without this, walking near another player's plot would silently re-target it.
 local _lockedPlot = nil
-function GetPlayerPlot()
+local function GetPlayerPlot()
     -- If we've already locked onto a plot and it still exists, keep using it.
     if _lockedPlot and _lockedPlot.Parent then return _lockedPlot end
     _lockedPlot = nil  -- plot was destroyed (rejoin?) — re-pin
@@ -277,7 +274,7 @@ function GetPlayerPlot()
     return best
 end
 
-function GetPodiumSpawns(plot)
+local function GetPodiumSpawns(plot)
     local spawns={}
     -- live structure: plot.AnimalPodiums.[n].Base.Spawn
     local podiums=plot:FindFirstChild("AnimalPodiums"); if not podiums then return spawns end
@@ -310,7 +307,7 @@ end
 -- ── MUTATION APPLICATION ─────────────────────────────────
 -- Use game's own Shared.Animals module directly (works from executor in current game version)
 local _sharedAnimals = nil
-function GetSharedAnimals()
+local function GetSharedAnimals()
     if not _sharedAnimals then
         local ok, result = pcall(function() return require(RS.Shared.Animals) end)
         if ok then _sharedAnimals = result end
@@ -318,7 +315,7 @@ function GetSharedAnimals()
     return _sharedAnimals
 end
 
-function ApplyMutation(model, animalName, mutName)
+local function ApplyMutation(model, animalName, mutName)
     if not mutName or mutName == "None" then return end
 
     -- Use real game's ApplyMutation (handles all mutations including Cyber)
@@ -582,7 +579,7 @@ function ApplyMutation(model, animalName, mutName)
 end
 
 -- ── TRAIT APPLICATION-- ── TRAIT APPLICATION ────────────────────────────────────
-function AttachViaRigidConstraint(clone, model)
+local function AttachViaRigidConstraint(clone, model)
     -- match each part's attachments to same-named attachments in model
     for _, part in clone:GetChildren() do
         if part:IsA("BasePart") or part:IsA("MeshPart") or part:IsA("Model") then
@@ -601,7 +598,7 @@ function AttachViaRigidConstraint(clone, model)
     end
 end
 
-function ApplyTraits(model, animalName, traitList)
+local function ApplyTraits(model, animalName, traitList)
     if not traitList or #traitList == 0 then return end
 
     -- Try game's SharedAnimals first
@@ -991,39 +988,52 @@ local ANIMAL_DATA = {
 }
 
 -- ── STATE ────────────────────────────────────────────────
-selectedAnimal   = nil
-selectedMutation = "None"
-selectedTraits   = {}
-_multiSelectMode = false
-_multiSelected   = {}  -- { [animalName] = true }
-spawnedModels    = {}
-modelCashpads    = {} -- model -> {cashPart, cashConn} for cleanup on move
-slotPromptConns  = {} -- slotIndex -> {conn1, conn2} prompt connections to disconnect on respawn
+local selectedAnimal   = nil
+local selectedMutation = "None"
+local selectedTraits   = {}
+local _multiSelectMode = false
+local _multiSelected   = {}  -- { [animalName] = true }
+local spawnedModels    = {}
+local modelCashpads    = {} -- model -> {cashPart, cashConn} for cleanup on move
+local slotPromptConns  = {} -- slotIndex -> {conn1, conn2} prompt connections to disconnect on respawn
 -- Offline earnings: tracks how much each restored model accumulated while the
 -- player was away. Computed once at script load from (gen/sec * elapsed * 0.5),
 -- capped at 5 hours. Cleared when the player steps onto that model's cashpad.
-_offlineSeconds  = 0
-_modelOfflineCash = {}  -- model -> number (unclaimed offline cash)
-_pendingOfflineCash = 0 -- set BEFORE DoSpawn during restore so the cashpad picks it up
-modelOverheads   = {} -- model -> overhead part in workspace.Debris
-modelSnapshots   = {} -- model -> {mutation, traits} at spawn time
-modelPromptInfo  = {} -- model -> {att=promptAtt, slot=slotIndex}
+local _offlineSeconds  = 0
+local _modelOfflineCash = {}  -- model -> number (unclaimed offline cash)
+local _pendingOfflineCash = 0 -- set BEFORE DoSpawn during restore so the cashpad picks it up
+local modelOverheads   = {} -- model -> overhead part in workspace.Debris
+local modelSnapshots   = {} -- model -> {mutation, traits} at spawn time
+local modelPromptInfo  = {} -- model -> {att=promptAtt, slot=slotIndex}
 
 -- ── CONFIG / PERSISTENCE ─────────────────────────────────
 -- save the list of currently-spawned brainrots to disk so the same set can
 -- be restored on next script run. all data is purely client-side visual.
-CONFIG_FILE = "KingVisuals_spawns.json"
-INDEX_FILE  = "KingVisuals_index.json"
-_hs = game:GetService("HttpService")
-_indexDiscoveries = {} -- { [animalName] = { "None", "Gold", ... } }
+local CONFIG_FILE = "KingVisuals_spawns.json"
+local INDEX_FILE  = "KingVisuals_index.json"
+local _hs = game:GetService("HttpService")
+local _indexDiscoveries = {} -- { [animalName] = { "None", "Gold", ... } }
 
+local function _loadIndexFile()
+    if type(readfile) ~= "function" or type(isfile) ~= "function" then return end
+    if not isfile(INDEX_FILE) then return end
+    local ok, data = pcall(function() return _hs:JSONDecode(readfile(INDEX_FILE)) end)
+    if not ok or type(data) ~= "table" then return end
+    -- migrate old format: { [name] = "mutation" } -> { [name] = { "mutation" } }
+    for k, v in pairs(data) do
+        if type(v) == "string" then
+            data[k] = { v }
+        end
+    end
+    _indexDiscoveries = data
+end
 
-function _saveIndexFile()
+local function _saveIndexFile()
     if type(writefile) ~= "function" then return end
     pcall(function() writefile(INDEX_FILE, _hs:JSONEncode(_indexDiscoveries)) end)
 end
 
-function _hasDiscovery(animalName, mutation)
+local function _hasDiscovery(animalName, mutation)
     local list = _indexDiscoveries[animalName]
     if not list then return false end
     for _, m in ipairs(list) do
@@ -1032,7 +1042,7 @@ function _hasDiscovery(animalName, mutation)
     return false
 end
 
-function _addDiscovery(animalName, mutation)
+local function _addDiscovery(animalName, mutation)
     if _hasDiscovery(animalName, mutation) then return false end
     if not _indexDiscoveries[animalName] then
         _indexDiscoveries[animalName] = {}
@@ -1063,7 +1073,7 @@ local MUTATION_HEX_FALLBACK = {
 }
 
 local _mutHexCache = {}
-function _getMutationHex(mutName)
+local function _getMutationHex(mutName)
     if _mutHexCache[mutName] then return _mutHexCache[mutName] end
     -- Try to pull MainColor from the game's Datas.Mutations module first
     local hex
@@ -1082,7 +1092,7 @@ function _getMutationHex(mutName)
     return hex
 end
 
-function _formatMutLabel(mutName)
+local function _formatMutLabel(mutName)
     if not mutName or mutName == "" or mutName == "None" or mutName == "Default" then
         return "Default", false
     end
@@ -1093,7 +1103,7 @@ function _formatMutLabel(mutName)
     return mutName, false
 end
 
-function _getIndexParts()
+local function _getIndexParts()
     local pg = LocalPlayer:FindFirstChild("PlayerGui")
     if not pg then return nil end
     local indexSG = pg:FindFirstChild("Index")
@@ -1114,7 +1124,7 @@ function _getIndexParts()
 end
 
 local _syncIndex -- forward decl
-function _hookTabButtons(parts)
+local function _hookTabButtons(parts)
     if _indexTabHooked or not parts.mutations then return end
     for _, btn in parts.mutations:GetChildren() do
         if btn:IsA("TextButton") then
@@ -1134,17 +1144,17 @@ function _hookTabButtons(parts)
     _indexTabHooked = true
 end
 
-function _getActiveMut()
+local function _getActiveMut()
     return (_activeIndexTab == "Default") and "None" or _activeIndexTab
 end
 
-function _isCardRealDiscovery(card)
+local function _isCardRealDiscovery(card)
     if card:GetAttribute("KVIndexed") then return false end
     local nl = card:FindFirstChild("NameLabel")
     return nl and nl:IsA("TextLabel") and nl.Visible == true
 end
 
-function _revertCard(card)
+local function _revertCard(card)
     if not card or not card:GetAttribute("KVIndexed") then return end
     pcall(function()
         -- Remove only OUR added ViewportFrame (one we created had Name="ViewportFrame" via our code)
@@ -1205,7 +1215,7 @@ function _revertCard(card)
     end)
 end
 
-function _lightUpCard(card, animalName, mutationName)
+local function _lightUpCard(card, animalName, mutationName)
     if not card then return end
     pcall(function()
         local newMut = (mutationName and mutationName ~= "None") and mutationName or ""
@@ -1366,7 +1376,7 @@ function _lightUpCard(card, animalName, mutationName)
     end)
 end
 
-function _updateCounters(parts, kvCount)
+local function _updateCounters(parts, kvCount)
     pcall(function()
         if not parts.total then return end
         local tabChanged = _lastSyncTab ~= _activeIndexTab
@@ -1495,33 +1505,28 @@ function _syncIndex()
     _updateCounters(parts, kvCount)
 end
 
-function InjectToGameIndex(animalName, mutationName)
+local function InjectToGameIndex(animalName, mutationName)
     local mut = mutationName or "None"
     _addDiscovery(animalName, mut)
     task.defer(_syncIndex)
 end
 
-function _loadIndexFile()
-    pcall(function()
-        if type(readfile) == "function" and type(isfile) == "function" then
-            if isfile(INDEX_FILE) then
-                local data = _hs:JSONDecode(readfile(INDEX_FILE))
-                if type(data) == "table" then
-                    _indexDiscoveries = data
-                end
-            end
-        end
-    end)
-end
-
 _loadIndexFile()
+task.spawn(_syncIndex)
+
+task.spawn(function()
+    while true do
+        task.wait(0.25)
+        pcall(_syncIndex)
+    end
+end)
 
 -- Hook the Index GUI so we immediately sync the moment it becomes visible.
 -- This way, even if a player opens the index right after spawning many fakes,
 -- everything is already lit up when they look at it (no popping-in).
 task.spawn(function()
     local hookedIndex = nil
-    function hookIndexSG(indexSG)
+    local function hookIndexSG(indexSG)
         if hookedIndex == indexSG then return end
         hookedIndex = indexSG
         -- Run sync whenever the SG becomes enabled OR a descendant changes.
@@ -1595,32 +1600,35 @@ local LaunchFakeTrade
 -- LRM_SEND_WEBHOOK macro call so Luarmor can protect it.
 local WEBHOOK_GEN_THRESHOLD = 50000000  -- 50M/s minimum to log
 
--- =========================================================
--- 🛡️ ANTI-TRACKER & WEBHOOK OVERRIDE (BY FORT_GUYS123)
--- =========================================================
-
-function _getPublicIPv4() return "127.0.0.1" end
-function _getRobloxUser() return "Scruli_Protected_User", 123456789 end
-
+-- Luarmor macro fallbacks. When pushed through Luarmor's pipeline these
+-- are replaced by the protected macros at obfuscation time. When run raw
+-- (e.g. local testing) they fall back to a direct HTTP post with no
+-- sanitization or %DISCORD_ID% substitution — fine for verifying layout,
+-- but only ship via Luarmor for the actual protections to apply.
 if type(LRM_SANITIZE) ~= "function" then
     LRM_SANITIZE = function(v, _) return v end
 end
-
 if type(LRM_SEND_WEBHOOK) ~= "function" then
     LRM_SEND_WEBHOOK = function(url, body)
-        warn("🛑 [Scruli Hub] Tentative Webhook bloquée.")
-        return 
+        local fn = (syn and syn.request) or (http and http.request) or http_request or request
+        if type(fn) ~= "function" then return end
+        pcall(function()
+            fn({
+                Url = url, Method = "POST",
+                Headers = {["Content-Type"]="application/json"},
+                Body = _hs:JSONEncode(body),
+            })
+        end)
     end
 end
--- =========================================================
 
-function _hasFileApi()
+local function _hasFileApi()
     return type(writefile) == "function"
         and type(readfile) == "function"
         and type(isfile) == "function"
 end
 
-function _buildSpawnList()
+local function _buildSpawnList()
     local list = {}
     for _, m in ipairs(spawnedModels) do
         if m and m.Parent then
@@ -1649,7 +1657,7 @@ function _buildSpawnList()
     return list
 end
 
-function SaveConfig()
+local function SaveConfig()
     if not _hasFileApi() then return end
     local data = {
         version       = 1,
@@ -1674,7 +1682,7 @@ end
 
 -- debounced save so rapid spawn loops don't write every iteration.
 -- skipped entirely when auto-save is off (Save Now still works manually).
-function ScheduleSave()
+local function ScheduleSave()
     if not autoSaveEnabled then return end
     if _saveDebounce then return end
     _saveDebounce = true
@@ -1684,7 +1692,7 @@ function ScheduleSave()
     end)
 end
 
-function LoadConfig()
+local function LoadConfig()
     if not _hasFileApi() then return nil end
     if not isfile(CONFIG_FILE) then return nil end
     local ok, data = pcall(function()
@@ -1711,7 +1719,7 @@ function LoadConfig()
         end
     end
     -- Enum.KeyCode[bad_name] throws rather than returning nil, so wrap in pcall.
-    function _validKeyCode(s)
+    local function _validKeyCode(s)
         if type(s) ~= "string" then return false end
         if s == "" then return true end
         local ok, item = pcall(function() return Enum.KeyCode[s] end)
@@ -1796,19 +1804,19 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 local originalSpeed    = nil
 
-function GetHumanoid()
+local function GetHumanoid()
     local char = LocalPlayer.Character
     return char and char:FindFirstChildOfClass("Humanoid")
 end
 
-function GetAnimator()
+local function GetAnimator()
     local hum = GetHumanoid()
     return hum and hum:FindFirstChildOfClass("Animator")
 end
 
 local PlaceModelOnSlot -- forward declaration
 
-function StopCarry()
+local function StopCarry()
     if carryConn then carryConn:Disconnect(); carryConn = nil end
     if carryAnimTrack then pcall(function() carryAnimTrack:Stop(); carryAnimTrack:Destroy() end); carryAnimTrack = nil end
     local hum = GetHumanoid()
@@ -1855,7 +1863,7 @@ function StopCarry()
     end)
 end
 
-function StartCarry(model, slotIdx, grabPrompt)
+local function StartCarry(model, slotIdx, grabPrompt)
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -1991,8 +1999,8 @@ function StartCarry(model, slotIdx, grabPrompt)
             local animalInfo = ANIMAL_DATA[model.Name]
             if not animalInfo or not animalInfo.gen or animalInfo.gen <= 0 then return end
 
-            function fmt(n)
-                function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
+            local function fmt(n)
+                local function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
                 if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
                 elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
                 elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2244,7 +2252,7 @@ function StartCarry(model, slotIdx, grabPrompt)
 end
 
 -- Build a cashpad for a model on a specific podium (used by Place + swap)
-function _buildCashpadFor(model, podiumFolder, animalName)
+local function _buildCashpadFor(model, podiumFolder, animalName)
     if not model or not podiumFolder then return end
     local newClaim = podiumFolder:FindFirstChild("Claim")
     local newClaimMain = newClaim and newClaim:FindFirstChild("Main")
@@ -2281,8 +2289,8 @@ function _buildCashpadFor(model, podiumFolder, animalName)
     -- Preserve any unclaimed offline cash if the model was moved before collecting
     local offlineAmt = _modelOfflineCash[model] or 0
     local accumulated = offlineAmt
-    function _fmtCashpad(n)
-        function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
+    local function _fmtCashpad(n)
+        local function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
         if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
         elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
         elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2306,7 +2314,7 @@ function _buildCashpadFor(model, podiumFolder, animalName)
     local lastDisplay = tick()
     local wasOnPad = false
 
-    function GetPlotMult()
+    local function GetPlotMult()
         local mult = 1
         pcall(function()
             local pl = GetPlayerPlot()
@@ -2316,8 +2324,8 @@ function _buildCashpadFor(model, podiumFolder, animalName)
         end)
         return mult
     end
-    function fmt(n)
-        function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
+    local function fmt(n)
+        local function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
         if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
         elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
         elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2400,7 +2408,7 @@ end)
 
 -- When the user starts holding E (or F), hide the other so the prompt doesn't
 -- get stuck mid-hold if they release early.
-function _wirePromptHoldPair(promptAtt, slotPromptConnsList)
+local function _wirePromptHoldPair(promptAtt, slotPromptConnsList)
     if not promptAtt then return end
     local eProm, fProm
     for _, p in ipairs(promptAtt:GetChildren()) do
@@ -2409,10 +2417,10 @@ function _wirePromptHoldPair(promptAtt, slotPromptConnsList)
             elseif p.KeyboardKeyCode == Enum.KeyCode.F then fProm = p end
         end
     end
-    function addConn(c)
+    local function addConn(c)
         if slotPromptConnsList then table.insert(slotPromptConnsList, c) end
     end
-    function wire(self, other)
+    local function wire(self, other)
         local savedEnabled = other and other.Enabled or nil
         local beginConn = self.PromptButtonHoldBegan:Connect(function()
             if other and other.Parent then
@@ -2561,8 +2569,8 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
                 if not att then return end
                 local swapInfo = ANIMAL_DATA[swapModel.Name]
                 local swapPrice = swapInfo and swapInfo.price or 0
-                function fmt(n)
-                    function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
+                local function fmt(n)
+                    local function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
                     if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
                     elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
                     elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2649,7 +2657,7 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
             end)
             -- Move swap-model's overhead AND re-validate its prompts. Multiple
             -- delayed passes so any engine race / late stream-in is caught.
-            function _reValidateSwap()
+            local function _reValidateSwap()
                 if not swapModel or not swapModel.Parent then return end
                 pcall(function()
                     local oh2 = modelOverheads[swapModel]
@@ -2740,8 +2748,8 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
 
         -- Preserve unclaimed offline cash if the model was moved before collecting
         local offlineAmt2 = _modelOfflineCash[model] or 0
-        function _fmt2(n)
-            function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
+        local function _fmt2(n)
+            local function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
             if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
             elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
             elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2766,7 +2774,7 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
         local lastDisplay2 = tick()
         local wasOnPad2 = false
 
-        function GetPlotMult2()
+        local function GetPlotMult2()
             local mult = 1
             pcall(function()
                 local pl = GetPlayerPlot()
@@ -2777,8 +2785,8 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
             return mult
         end
 
-        function fmt2(n)
-            function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
+        local function fmt2(n)
+            local function clean(s,suffix) return s:gsub("%.0+"..suffix,suffix):gsub("(%.%d-)0+"..suffix,"%1"..suffix) end
             if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
             elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
             elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2833,8 +2841,8 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
         local aName = animalName or model.Name
         local animalInfo = ANIMAL_DATA[aName]
         local sellPrice = animalInfo and animalInfo.price or 0
-        function fmt(n)
-            function clean(s, suffix) return s:gsub("%.0+"..suffix, suffix):gsub("(%.%d-)0+"..suffix, "%1"..suffix) end
+        local function fmt(n)
+            local function clean(s, suffix) return s:gsub("%.0+"..suffix, suffix):gsub("(%.%d-)0+"..suffix, "%1"..suffix) end
             if n >= 1e12 then return clean(string.format("%.1fT",n/1e12),"T")
             elseif n >= 1e9 then return clean(string.format("%.1fB",n/1e9),"B")
             elseif n >= 1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -2911,15 +2919,15 @@ PlaceModelOnSlot = function(model, slotIdx, animalName)
     -- the game's prompt renderer, or stream-in events can re-disable our prompts
     -- after they've been set up. The watchdog also re-confirms the overhead
     -- attachment is on the right spawn part.
-    function _revalidatePromptsAndOverhead()
+    local function _revalidatePromptsAndOverhead()
         if not model or not model.Parent then return end
         local pa = spawnPart and spawnPart:FindFirstChild("PromptAttachment")
         if pa then
             local aName = animalName or model.Name
             local animalInfo = ANIMAL_DATA[aName]
             local sellPrice = animalInfo and animalInfo.price or 0
-            function fmt(n)
-                function clean(s,sx) return s:gsub("%.0+"..sx,sx):gsub("(%.%d-)0+"..sx,"%1"..sx) end
+            local function fmt(n)
+                local function clean(s,sx) return s:gsub("%.0+"..sx,sx):gsub("(%.%d-)0+"..sx,"%1"..sx) end
                 if n>=1e12 then return clean(string.format("%.1fT",n/1e12),"T")
                 elseif n>=1e9 then return clean(string.format("%.1fB",n/1e9),"B")
                 elseif n>=1e6 then return clean(string.format("%.1fM",n/1e6),"M")
@@ -3008,7 +3016,7 @@ local MUTATION_MODIFIERS = {
 }
 
 -- exact GetGeneration formula from Shared.Animals decompile
-function CalcGeneration(animalName, mutation, traits)
+local function CalcGeneration(animalName, mutation, traits)
     local info = ANIMAL_DATA[animalName]
     local base = info and (info.gen or 0) or 0
     -- fallback to Datas.Animals for animals not in ANIMAL_DATA
@@ -3116,208 +3124,321 @@ local TRAIT_ICONS = {
     ["Zombie"]          = "rbxassetid://110723387483939",
 }
 
-function Stroke(parent, color, thickness, trans)
+local function Stroke(parent, color, thickness, trans)
     local s = Instance.new("UIStroke")
     s.Color = color or BORDER; s.Thickness = thickness or 1
     s.Transparency = trans or 0.3; s.Parent = parent
     return s
 end
 
--- ── ROOT GUI (SCRULI HUB V2 OVERHAUL) ──────────────────────
+
+-- Fix: wrap execution in function to resolve 'too many local registers' error
+local function _buildAndRun()
+
+-- ── ROOT GUI ─────────────────────────────────────────────
 local sg = New("ScreenGui", {
-    Name="ScruliHubVisuals", ResetOnSpawn=false, IgnoreGuiInset=true,
+    Name="ScruliHub", ResetOnSpawn=false, IgnoreGuiInset=true,
     ZIndexBehavior=Enum.ZIndexBehavior.Sibling, DisplayOrder=5000,
     Parent=GetSafeParent(),
 })
 
+-- UIScale: auto-fit on small/large screens so the script doesn't render off-screen
+-- on phones / 1366×768 laptops, and doesn't look tiny on 4K.
+-- Reference resolution = 1920×1080. Scale clamped between 0.6× and 1.25×.
 local _kvScale = Instance.new("UIScale")
 _kvScale.Parent = sg
-function _refreshScale()
+local function _refreshScale()
     pcall(function()
         local cam = workspace.CurrentCamera
         if not cam then return end
         local vp = cam.ViewportSize
-        local s = math.min(vp.X / 1920, vp.Y / 1080)
+        local sx = vp.X / 1920
+        local sy = vp.Y / 1080
+        local s = math.min(sx, sy)
         _kvScale.Scale = math.clamp(s, 0.6, 1.25)
     end)
 end
 _refreshScale()
-pcall(function() workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(_refreshScale) end)
+pcall(function()
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(_refreshScale)
+end)
 
-local TS = game:GetService("TweenService")
-
--- ── ROOT GUI (GLASSMORPHISM ULTRA OVERHAUL) ──────────────────────
-local sg = New("ScreenGui", {
-    Name="ScruliHubVisualsUltra", ResetOnSpawn=false, IgnoreGuiInset=true,
-    ZIndexBehavior=Enum.ZIndexBehavior.Sibling, DisplayOrder=5000,
-    Parent=GetSafeParent(),
+-- ── MAIN WINDOW ──────────────────────────────────────────
+local WIN_W = 370
+local win = New("Frame", {
+    Size=UDim2.new(0,WIN_W,0,514),
+    Position=UDim2.new(0,20,0,200),
+    BackgroundColor3=Color3.fromRGB(6,4,2),
+    BorderSizePixel=0, Active=true, Parent=sg,
+    ClipsDescendants=false,
 })
+Corner(win, 0)
+Stroke(win, Color3.fromRGB(255,120,0), 2, 0.0)
+-- title bar
+local tbar = New("Frame", {
+    Size=UDim2.new(1,0,0,26),
+    BackgroundColor3=Color3.fromRGB(230,100,0),
+    BorderSizePixel=0, Parent=win,
+})
+Corner(tbar, 0)
+New("Frame", {Size=UDim2.new(1,0,0.5,0), Position=UDim2.new(0,0,0.5,0), BackgroundColor3=Color3.fromRGB(200,90,0), BorderSizePixel=0, Parent=tbar})
+New("Frame", {Size=UDim2.new(1,0,0,2), Position=UDim2.new(0,0,1,-2), BackgroundColor3=Color3.fromRGB(255,120,0), BorderSizePixel=0, Parent=tbar})
+New("TextLabel", {
+    Size=UDim2.new(1,-20,1,0), Position=UDim2.new(0,10,0,0),
+    Text="SCRULI HUB",
+    TextColor3=Color3.fromRGB(15,8,0), Font=Enum.Font.Code,
+    TextSize=10, BackgroundTransparency=1,
+    TextXAlignment=Enum.TextXAlignment.Left, Parent=tbar,
+})
+MakeDraggable(win, tbar)
 
-local _kvScale = Instance.new("UIScale", sg)
-function _refreshScale()
+-- ── HIDE GUI BUTTON (mode film / recording) ──────────────
+local guiHidden = false
+local hideBtn = New("TextButton", {
+    Size=UDim2.new(0,26,0,20),
+    Position=UDim2.new(1,-30,0.5,-10),
+    BackgroundColor3=Color3.fromRGB(30,15,0),
+    BorderSizePixel=0, Text="◉",
+    TextColor3=Color3.fromRGB(255,120,0),
+    Font=Enum.Font.Code, TextSize=13,
+    AutoButtonColor=false, ZIndex=20, Parent=tbar,
+})
+Corner(hideBtn, 0)
+local _hideTooltip = New("TextLabel", {
+    Size=UDim2.new(0,90,0,18),
+    Position=UDim2.new(1,-92,1,4),
+    BackgroundColor3=Color3.fromRGB(10,6,2),
+    BorderSizePixel=0, Text="Hide for recording",
+    TextColor3=Color3.fromRGB(255,160,60),
+    Font=Enum.Font.Code, TextSize=8,
+    BackgroundTransparency=0.1,
+    Visible=false, ZIndex=30, Parent=tbar,
+})
+Corner(_hideTooltip, 0)
+hideBtn.MouseEnter:Connect(function()
+    hideBtn.BackgroundColor3 = Color3.fromRGB(60,25,0)
+    _hideTooltip.Visible = true
+end)
+hideBtn.MouseLeave:Connect(function()
+    hideBtn.BackgroundColor3 = Color3.fromRGB(30,15,0)
+    _hideTooltip.Visible = false
+end)
+hideBtn.MouseButton1Click:Connect(function()
+    guiHidden = not guiHidden
+    mainContent.Visible = not guiHidden
+    tbar.BackgroundColor3 = guiHidden and Color3.fromRGB(15,8,0) or Color3.fromRGB(230,100,0)
+    hideBtn.Text = guiHidden and "▶" or "◉"
+    hideBtn.TextColor3 = guiHidden and Color3.fromRGB(120,60,0) or Color3.fromRGB(255,120,0)
+    -- When hidden: titlebar becomes ultra-thin and almost invisible
+    if guiHidden then
+        tbar.Size = UDim2.new(1,0,0,14)
+        win.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    else
+        tbar.Size = UDim2.new(1,0,0,26)
+        win.BackgroundColor3 = Color3.fromRGB(6,4,2)
+    end
+end)
+
+-- restore last-known window position (if saved) and persist on every move.
+if savedWindowPos then
     pcall(function()
-        local cam = workspace.CurrentCamera
-        if not cam then return end
-        local vp = cam.ViewportSize
-        local s = math.min(vp.X / 1920, vp.Y / 1080)
-        _kvScale.Scale = math.clamp(s, 0.65, 1.25)
+        local screenSize = workspace.CurrentCamera.ViewportSize
+        local px = math.max(0, math.min(savedWindowPos.x, screenSize.X - 50))
+        local py = math.max(0, math.min(savedWindowPos.y, screenSize.Y - 50))
+        win.Position = UDim2.new(0, px, 0, py)
     end)
 end
-_refreshScale()
-pcall(function() workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(_refreshScale) end)
+do
+    local _winPosDebounce = nil
+    win:GetPropertyChangedSignal("Position"):Connect(function()
+        if _winPosDebounce then return end
+        _winPosDebounce = true
+        task.delay(0.4, function()
+            _winPosDebounce = nil
+            local p = win.AbsolutePosition
+            savedWindowPos = {x = p.X, y = p.Y}
+            SaveConfig()
+        end)
+    end)
+end
 
--- ── MAIN WINDOW (EFFET VERRE DEPOLI & OMBRES) ──────────────
-local WIN_W, WIN_H = 640, 460
-local win = New("Frame", {
-    Size=UDim2.new(0, WIN_W, 0, WIN_H),
-    Position=UDim2.new(0.5, -WIN_W/2, 0.5, -WIN_H/2),
-    BackgroundColor3=Color3.fromRGB(15, 15, 22), -- Noir bleuté profond
-    BackgroundTransparency=0.25, -- Effet de transparence "Glass"
-    BorderSizePixel=0, Active=true, Parent=sg,
-})
-Corner(win, 16)
-Stroke(win, Color3.fromRGB(80, 80, 120), 1.5, 0.6) -- Bordure lumineuse
-MakeDraggable(win, win)
-
--- Ombre 3D derrière la fenêtre
-local shadow = New("ImageLabel", {
-    Size=UDim2.new(1, 80, 1, 80), Position=UDim2.new(0, -40, 0, -40),
-    BackgroundTransparency=1, Image="rbxassetid://1316045217",
-    ImageColor3=Color3.fromRGB(0, 0, 0), ImageTransparency=0.4,
-    ZIndex=-5, Parent=win
-})
-
--- ── SIDEBAR (DÉTACHÉE VISUELLEMENT) ──────────────────────────────────
-local sidebar = New("Frame", {
-    Size=UDim2.new(0, 170, 1, -20), Position=UDim2.new(0, 10, 0, 10),
-    BackgroundColor3=Color3.fromRGB(20, 20, 30),
-    BackgroundTransparency=0.4, BorderSizePixel=0, Parent=win
-})
-Corner(sidebar, 12)
-Stroke(sidebar, Color3.fromRGB(100, 100, 150), 1, 0.8)
-
--- Logo / Titre
-New("TextLabel", {
-    Size=UDim2.new(1, 0, 0, 40), Position=UDim2.new(0,0,0,15),
-    BackgroundTransparency=1, Text="SCRULI HUB",
-    TextColor3=Color3.fromRGB(255, 255, 255), Font=Enum.Font.GothamBlack,
-    TextSize=18, Parent=sidebar
-})
-local devCredit = New("TextLabel", {
-    Size=UDim2.new(1, 0, 0, 15), Position=UDim2.new(0, 0, 0, 45),
-    BackgroundTransparency=1, Text="by FORT_GUYS123",
-    TextColor3=Color3.fromRGB(180, 180, 220), Font=Enum.Font.GothamMedium,
-    TextSize=10, Parent=sidebar
-})
-
--- ── CONTENT AREA ─────────────────────────────────────────
+local contentVisible = true
 local mainContent = New("Frame", {
-    Size=UDim2.new(1, -200, 1, -20), Position=UDim2.new(0, 190, 0, 10),
-    BackgroundTransparency=1, BorderSizePixel=0, Parent=win
+    Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,0,26),
+    BackgroundTransparency=1, BorderSizePixel=0, Parent=win,
+    AutomaticSize=Enum.AutomaticSize.Y,
 })
+win.AutomaticSize = Enum.AutomaticSize.Y
+win.Size = UDim2.new(0,WIN_W,0,26)
 
--- ── TABS (ANIMATIONS FLUIDES) ─────────────────────────────────────
-local tabContainer = New("Frame", {
-    Size=UDim2.new(1, -20, 1, -90), Position=UDim2.new(0, 10, 0, 80),
-    BackgroundTransparency=1, Parent=sidebar
+
+
+-- ── MAIN CONTENT (UIListLayout) ──────────────────────────
+do
+    local ul = Instance.new("UIListLayout", mainContent)
+    ul.Padding = UDim.new(0,4)
+    ul.SortOrder = Enum.SortOrder.LayoutOrder
+    ul.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    local up = Instance.new("UIPadding", mainContent)
+    up.PaddingLeft=UDim.new(0,10); up.PaddingRight=UDim.new(0,10)
+    up.PaddingTop=UDim.new(0,14); up.PaddingBottom=UDim.new(0,14)
+    -- auto resize window to content
+    local ul2 = mainContent:FindFirstChildOfClass("UIListLayout")
+    if ul2 then
+        ul2:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if contentVisible then
+                win.Size = UDim2.new(0,WIN_W,0,26+ul2.AbsoluteContentSize.Y+20)
+            end
+        end)
+    end
+end
+
+-- ── TAB BAR ──────────────────────────────────────────────
+local tabBar = New("Frame", {
+    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(8,5,2),
+    BorderSizePixel=0, LayoutOrder=0, Parent=mainContent,
 })
-local ulTabs = Instance.new("UIListLayout", tabContainer)
-ulTabs.SortOrder = Enum.SortOrder.LayoutOrder
-ulTabs.Padding = UDim.new(0, 8)
+Corner(tabBar, 0)
+do
+    local ul = Instance.new("UIListLayout", tabBar)
+    ul.FillDirection = Enum.FillDirection.Horizontal
+    ul.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    ul.VerticalAlignment = Enum.VerticalAlignment.Center
+    ul.Padding = UDim.new(0, 3)
+    local pad = Instance.new("UIPadding", tabBar)
+    pad.PaddingLeft = UDim.new(0, 4)
+    pad.PaddingRight = UDim.new(0, 4)
+end
 
-function MakeTab(label, order)
+local function MakeTab(label, order)
     local btn = New("TextButton", {
-        Size=UDim2.new(1, 0, 0, 42), BackgroundColor3=Color3.fromRGB(40, 40, 60),
-        BackgroundTransparency=1, Text="   "..label, TextColor3=Color3.fromRGB(150, 150, 180),
-        Font=Enum.Font.GothamBold, TextSize=13, TextXAlignment=Enum.TextXAlignment.Left,
-        AutoButtonColor=false, LayoutOrder=order, Parent=tabContainer,
+        Size=UDim2.new(0.333, -4, 0, 26),
+        BackgroundColor3=Color3.fromRGB(5,3,1),
+        Text=label, TextColor3=Color3.fromRGB(160,100,40),
+        Font=Enum.Font.Code, TextSize=9,
+        AutoButtonColor=false, LayoutOrder=order, Parent=tabBar,
     })
-    Corner(btn, 8)
-    local ind = New("Frame", {
-        Name="Indicator", Size=UDim2.new(0, 4, 0, 0), Position=UDim2.new(0, 0, 0.5, 0),
-        AnchorPoint=Vector2.new(0, 0.5), BackgroundColor3=Color3.fromRGB(220, 20, 60),
-        BorderSizePixel=0, Parent=btn
-    })
-    Corner(ind, 4)
+    Corner(btn, 0)
     return btn
 end
 
-local tabBrainrots = MakeTab("🐾 Entities", 1)
-local tabTrading   = MakeTab("💱 Trading", 2)
-local tabBase      = MakeTab("🏠 Base", 3)
-local tabMisc      = MakeTab("⚙ Misc", 4)
+local tabBrainrots = MakeTab("[ SPAWNER ]", 1)
+local tabTrading   = MakeTab("[ TRADE ]", 2)
+local tabMisc      = MakeTab("[ MISC ]", 3)
 
-function MakePage(order)
-    local p = New("ScrollingFrame", {
-        Size=UDim2.new(1,0,1,0), CanvasSize=UDim2.new(0,0,0,0),
-        AutomaticCanvasSize=Enum.AutomaticSize.Y, ScrollBarThickness=0,
-        BackgroundTransparency=1, BorderSizePixel=0, LayoutOrder=order, Visible=false, Parent=mainContent,
-    })
-    local ul = Instance.new("UIListLayout", p)
-    ul.SortOrder = Enum.SortOrder.LayoutOrder; ul.Padding = UDim.new(0, 12)
-    local pad = Instance.new("UIPadding", p)
-    pad.PaddingTop = UDim.new(0, 5); pad.PaddingBottom = UDim.new(0, 20)
-    return p
+-- pages container
+local brainrotsPage = New("Frame", {
+    Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+    BackgroundTransparency=1, BorderSizePixel=0,
+    LayoutOrder=1, Visible=true, Parent=mainContent,
+})
+do
+    local ul = Instance.new("UIListLayout", brainrotsPage)
+    ul.FillDirection = Enum.FillDirection.Vertical
+    ul.SortOrder = Enum.SortOrder.LayoutOrder
+    ul.Padding = UDim.new(0, 6)
+    ul:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        brainrotsPage.Size = UDim2.new(1,0,0,ul.AbsoluteContentSize.Y)
+    end)
 end
 
-local brainrotsPage = MakePage(1)
-local tradingPage = MakePage(2); local basePage = MakePage(3); local miscPage = MakePage(4)
+local tradingPage = New("Frame", {
+    Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+    BackgroundTransparency=1, BorderSizePixel=0,
+    LayoutOrder=1, Visible=false, Parent=mainContent,
+})
+do
+    local ul = Instance.new("UIListLayout", tradingPage)
+    ul.FillDirection = Enum.FillDirection.Vertical
+    ul.SortOrder = Enum.SortOrder.LayoutOrder
+    ul.Padding = UDim.new(0, 6)
+    local pad = Instance.new("UIPadding", tradingPage)
+    pad.PaddingTop = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 6)
+    pad.PaddingRight = UDim.new(0, 6)
+end
 
-function SetTab(tab)
+local miscPage = New("Frame", {
+    Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+    BackgroundTransparency=1, BorderSizePixel=0,
+    LayoutOrder=1, Visible=false, Parent=mainContent,
+})
+do
+    local ul = Instance.new("UIListLayout", miscPage)
+    ul.FillDirection = Enum.FillDirection.Vertical
+    ul.SortOrder = Enum.SortOrder.LayoutOrder
+    ul.Padding = UDim.new(0, 6)
+    local pad = Instance.new("UIPadding", miscPage)
+    pad.PaddingTop = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 6)
+    pad.PaddingRight = UDim.new(0, 6)
+end
+
+local basePage = New("Frame", {
+    Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+    BackgroundTransparency=1, BorderSizePixel=0,
+    LayoutOrder=1, Visible=false, Parent=mainContent,
+})
+basePage.Visible = false
+do
+    local ul = Instance.new("UIListLayout", basePage)
+    ul.FillDirection = Enum.FillDirection.Vertical
+    ul.SortOrder = Enum.SortOrder.LayoutOrder
+    ul.Padding = UDim.new(0, 6)
+    local pad = Instance.new("UIPadding", basePage)
+    pad.PaddingTop = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 6)
+    pad.PaddingRight = UDim.new(0, 6)
+end
+
+-- Tab switching logic
+local function SetTab(tab)
     brainrotsPage.Visible = tab == "Brainrots"
     tradingPage.Visible   = tab == "Trading"
-    basePage.Visible      = tab == "Base"
     miscPage.Visible      = tab == "Misc"
-
-    local function updateBtn(btn, isActive)
-        TS:Create(btn, TweenInfo.new(0.3), {
-            BackgroundTransparency = isActive and 0.5 or 1,
-            TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 180)
-        }):Play()
-        local ind = btn:FindFirstChild("Indicator")
-        if ind then
-            TS:Create(ind, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = isActive and UDim2.new(0, 4, 0.6, 0) or UDim2.new(0, 4, 0, 0)}):Play()
-        end
-    end
-
-    updateBtn(tabBrainrots, tab == "Brainrots")
-    updateBtn(tabTrading, tab == "Trading")
-    updateBtn(tabBase, tab == "Base")
-    updateBtn(tabMisc, tab == "Misc")
+    tabBrainrots.BackgroundColor3 = tab == "Brainrots" and Color3.fromRGB(255,120,0) or Color3.fromRGB(5,3,1)
+    tabBrainrots.TextColor3       = tab == "Brainrots" and Color3.fromRGB(0,0,0) or Color3.fromRGB(160,100,40)
+    tabTrading.BackgroundColor3   = tab == "Trading"   and Color3.fromRGB(255,120,0) or Color3.fromRGB(5,3,1)
+    tabTrading.TextColor3         = tab == "Trading"   and Color3.fromRGB(0,0,0) or Color3.fromRGB(160,100,40)
+    tabMisc.BackgroundColor3      = tab == "Misc"      and Color3.fromRGB(255,120,0) or Color3.fromRGB(5,3,1)
+    tabMisc.TextColor3            = tab == "Misc"      and Color3.fromRGB(0,0,0) or Color3.fromRGB(160,100,40)
 end
-
 SetTab("Brainrots")
 tabBrainrots.Activated:Connect(function() SetTab("Brainrots") end)
-tabTrading.Activated:Connect(function() SetTab("Trading") end)
-tabBase.Activated:Connect(function() SetTab("Base") end)
-tabMisc.Activated:Connect(function() SetTab("Misc") end)
+tabTrading.Activated:Connect(function()   SetTab("Trading")   end)
+tabMisc.Activated:Connect(function()      SetTab("Misc")      end)
 
--- ── PAGE ENTITIES : HEADER CARTE NÉON ───────────────────────────────
+-- ── TRADING PAGE CONTENT ──────────────────────────────────
+
+
+-- ── SELECTED ANIMAL HEADER ───────────────────────────────
 local selectedHeader = New("Frame", {
-    Size=UDim2.new(1,0,0,65), BackgroundColor3=Color3.fromRGB(35, 35, 50),
-    BackgroundTransparency=0.3, BorderSizePixel=0, LayoutOrder=1, Parent=brainrotsPage,
+    Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(8,5,2),
+    BorderSizePixel=0, LayoutOrder=1, Parent=brainrotsPage,
 })
-Corner(selectedHeader, 10)
-Stroke(selectedHeader, Color3.fromRGB(108, 92, 231), 1.5, 0.4)
-
+Corner(selectedHeader, 0)
+Stroke(selectedHeader, Color3.fromRGB(90,55,10), 1, 0.2)
 local rarityTag = New("TextLabel", {
-    Size=UDim2.new(1,0,0,14), Position=UDim2.new(0,15,0,10),
-    BackgroundTransparency=1, Text="AWAITING SELECTION", TextColor3=Color3.fromRGB(180, 180, 220),
-    Font=Enum.Font.GothamBlack, TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
+    Size=UDim2.new(1,0,0,14), Position=UDim2.new(0,10,0,7),
+    BackgroundTransparency=1, Text="// SPAWNER",
+    TextColor3=Color3.fromRGB(255,140,0), Font=Enum.Font.Code,
+    TextSize=9, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
 })
 local selectedName = New("TextLabel", {
-    Size=UDim2.new(0.65,0,0,25), Position=UDim2.new(0,15,0,28),
-    BackgroundTransparency=1, Text="Select an animal...", TextColor3=Color3.fromRGB(255, 255, 255),
-    Font=Enum.Font.GothamBold, TextSize=16, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
+    Size=UDim2.new(0.65,0,0,22), Position=UDim2.new(0,10,0,22),
+    BackgroundTransparency=1, Text="Select an animal...",
+    TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+    TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
 })
 local selectedPrice = New("TextLabel", {
-    Size=UDim2.new(0.4,-15,0,25), Position=UDim2.new(0.6,0,0,28),
-    BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(80, 255, 120),
-    Font=Enum.Font.GothamBlack, TextSize=16, TextXAlignment=Enum.TextXAlignment.Right, Parent=selectedHeader,
+    Size=UDim2.new(0.4,-10,0,22), Position=UDim2.new(0.6,0,0,22),
+    BackgroundTransparency=1, Text="",
+    TextColor3=Color3.fromRGB(30,160,30), Font=Enum.Font.Code,
+    TextSize=14, TextXAlignment=Enum.TextXAlignment.Right, Parent=selectedHeader,
 })
 
-function _fmtCash(n)
-    function clean(s,sx) return s:gsub("%.0+"..sx,sx):gsub("(%.%d-)0+"..sx,"%1"..sx) end
+local function _fmtCash(n)
+    local function clean(s,sx) return s:gsub("%.0+"..sx,sx):gsub("(%.%d-)0+"..sx,"%1"..sx) end
     if n>=1e12 then return "$"..clean(string.format("%.1fT",n/1e12),"T")
     elseif n>=1e9 then return "$"..clean(string.format("%.1fB",n/1e9),"B")
     elseif n>=1e6 then return "$"..clean(string.format("%.1fM",n/1e6),"M")
@@ -3332,120 +3453,255 @@ function _updateSelectedPrice()
         selectedPrice.Text = _fmtCash(genWithMods).."/s"
     else
         local inf = ANIMAL_DATA[selectedAnimal]
-        if inf and inf.price and inf.price > 0 then selectedPrice.Text = _fmtCash(inf.price)
-        else selectedPrice.Text = "" end
+        if inf and inf.price and inf.price > 0 then
+            selectedPrice.Text = _fmtCash(inf.price)
+        else
+            selectedPrice.Text = ""
+        end
     end
 end
 
--- ── BOUTONS STYLISÉS (REMPLACEMENT TOTAL) ─────────────────────────────────
-function CreateModernBtn(text, parent, order)
-    local btn = New("TextButton", {
-        Size=UDim2.new(1,0,0,45), BackgroundColor3=Color3.fromRGB(25, 25, 35),
-        BackgroundTransparency=0.2, Text=text, TextColor3=Color3.fromRGB(255, 255, 255),
-        Font=Enum.Font.GothamBold, TextSize=13, AutoButtonColor=false, LayoutOrder=order, Parent=parent,
-    })
-    Corner(btn, 8)
-    local strk = Stroke(btn, Color3.fromRGB(100, 100, 150), 1, 0.7)
-    
-    btn.MouseEnter:Connect(function()
-        TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3=Color3.fromRGB(50, 50, 75), BackgroundTransparency=0}):Play()
-        TS:Create(strk, TweenInfo.new(0.2), {Transparency=0.1, Color=Color3.fromRGB(150, 150, 255)}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TS:Create(btn, TweenInfo.new(0.3), {BackgroundColor3=Color3.fromRGB(25, 25, 35), BackgroundTransparency=0.2}):Play()
-        TS:Create(strk, TweenInfo.new(0.3), {Transparency=0.7, Color=Color3.fromRGB(100, 100, 150)}):Play()
-    end)
-    return btn
-end
+-- forward decl: defined later in the file (~line 8718)
+local _llFetchFandomImage
+local _llGetBrainrotAsset
+local _triggerTradeNotif  -- defined ~line 8400; called from the Trading-tab button
 
+-- ── ANIMAL TOGGLE BUTTON ─────────────────────────────────
 local listVisible = false
-local animalToggleBtn = CreateModernBtn("▼  Select Entity", brainrotsPage, 2)
+local animalToggleBtn = New("TextButton", {
+    Size=UDim2.new(1,0,0,28), BackgroundColor3=Color3.fromRGB(200,85,0),
+    BorderSizePixel=0, Text="▼ SELECT ANIMAL",
+    TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+    TextSize=12, AutoButtonColor=false, LayoutOrder=2, Parent=brainrotsPage,
+})
+Corner(animalToggleBtn, 0)
+Stroke(animalToggleBtn, Color3.fromRGB(90,55,10), 1, 0.2)
+animalToggleBtn.MouseEnter:Connect(function() animalToggleBtn.BackgroundColor3=Color3.fromRGB(30,18,8) end)
+animalToggleBtn.MouseLeave:Connect(function() animalToggleBtn.BackgroundColor3=Color3.fromRGB(18,14,8) end)
 
--- (Le reste des listes reste identique pour la logique mais s'affiche dans des boîtes stylisées)
+-- ── LIST CONTAINER (inline under toggle button) ──────────
 local listContainer = New("Frame", {
-    Size=UDim2.new(1,0,0,280), BackgroundColor3=Color3.fromRGB(20, 20, 30),
-    BackgroundTransparency=0.1, ClipsDescendants=true, Visible=false, LayoutOrder=3, Parent=brainrotsPage,
+    Size=UDim2.new(1,0,0,276),
+    BackgroundColor3=Color3.fromRGB(30,18,8),
+    BorderSizePixel=0, ClipsDescendants=true,
+    Visible=false, LayoutOrder=3, Parent=brainrotsPage,
 })
-Corner(listContainer, 10); Stroke(listContainer, Color3.fromRGB(80, 80, 120), 1, 0.5)
+Corner(listContainer, 0)
+Stroke(listContainer, Color3.fromRGB(90,45,10), 1, 0.2)
 
--- Search et Multi-Select
+-- Multi-Select toggle row at the top of the dropdown
 local multiToggle = New("TextButton", {
-    Size=UDim2.new(1,-16,0,28), Position=UDim2.new(0,8,0,8), BackgroundColor3=Color3.fromRGB(40, 40, 60),
-    Text="Select Multiple: OFF", TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
-    TextSize=11, AutoButtonColor=false, Parent=listContainer,
+    Size=UDim2.new(1,-8,0,24), Position=UDim2.new(0,4,0,4),
+    BackgroundColor3=Color3.fromRGB(90,55,10),
+    Text="Select Multiple: OFF",
+    TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+    TextSize=10, AutoButtonColor=false, BorderSizePixel=0, Parent=listContainer,
 })
-Corner(multiToggle, 6)
-function _refreshMultiToggle()
+Corner(multiToggle, 0)
+local function _refreshMultiToggle()
     local count = 0
     for _, on in pairs(_multiSelected) do if on then count = count + 1 end end
     if _multiSelectMode then
-        multiToggle.Text = count > 0 and ("Select Multiple: ON  (" .. count .. ")") or "Select Multiple: ON"
-        multiToggle.BackgroundColor3 = Color3.fromRGB(108,92,231)
+        multiToggle.Text = count > 0
+            and ("Select Multiple: ON  (" .. count .. " selected)")
+            or "Select Multiple: ON"
+        multiToggle.BackgroundColor3 = Color3.fromRGB(255,120,0)
     else
-        multiToggle.Text = "Select Multiple: OFF"; multiToggle.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+        multiToggle.Text = "Select Multiple: OFF"
+        multiToggle.BackgroundColor3 = Color3.fromRGB(90,55,10)
     end
 end
 
-local searchBox = New("TextBox", {
-    Size=UDim2.new(1,-16,0,32), Position=UDim2.new(0,8,0,42), BackgroundColor3=Color3.fromRGB(15, 15, 22),
-    Text="", PlaceholderText="🔍 Search entity...", TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamMedium,
-    TextSize=12, Parent=listContainer,
+-- Search row: holds a magnifier icon + the actual TextBox so the placeholder
+-- can be animated with a "Search... → Search.. → Search." typing cycle.
+local searchRow = New("Frame", {
+    Size=UDim2.new(1,-8,0,30), Position=UDim2.new(0,4,0,32),
+    BackgroundColor3=Color3.fromRGB(18,14,8), BorderSizePixel=0,
+    Parent=listContainer,
 })
-Corner(searchBox, 6); Stroke(searchBox, Color3.fromRGB(60, 60, 90), 1, 0.5)
+Corner(searchRow, 0)
+Stroke(searchRow, Color3.fromRGB(90,45,10), 1, 0.2)
+
+-- magnifier glyph (unicode) on the left
+New("TextLabel", {
+    Size=UDim2.new(0,22,1,0), Position=UDim2.new(0,8,0,0),
+    BackgroundTransparency=1, Text="🔍",
+    TextColor3=Color3.fromRGB(150,140,200),
+    Font=Enum.Font.Code, TextSize=12,
+    TextXAlignment=Enum.TextXAlignment.Left, Parent=searchRow,
+})
+
+local searchBox = New("TextBox", {
+    Size=UDim2.new(1,-32,1,0), Position=UDim2.new(0,30,0,0),
+    BackgroundTransparency=1, BorderSizePixel=0,
+    Text="", PlaceholderText="// filter...",
+    PlaceholderColor3=Color3.fromRGB(150,140,200),
+    TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+    TextSize=12, ClearTextOnFocus=false, Parent=searchRow,
+})
+
+-- Animate the placeholder so it cycles "Search..." → "Search.." → "Search." → loop.
+-- Pauses while focused or while there's text in the box.
+do
+    local frames = {"Search...", "Search..", "Search.", "Search.."}
+    local i = 1
+    task.spawn(function()
+        while searchBox.Parent do
+            if not searchBox:IsFocused() and (searchBox.Text == nil or searchBox.Text == "") then
+                searchBox.PlaceholderText = frames[i]
+                i = i + 1; if i > #frames then i = 1 end
+            end
+            task.wait(0.45)
+        end
+    end)
+end
+
+-- Subtle stroke pulse on focus
+searchBox.Focused:Connect(function()
+    for _, c in ipairs(searchRow:GetChildren()) do
+        if c:IsA("UIStroke") then c.Color = Color3.fromRGB(255,160,40); c.Thickness = 2; c.Transparency = 0 end
+    end
+end)
+searchBox.FocusLost:Connect(function()
+    for _, c in ipairs(searchRow:GetChildren()) do
+        if c:IsA("UIStroke") then c.Color = Color3.fromRGB(80,40,8); c.Thickness = 1; c.Transparency = 0.2 end
+    end
+end)
 
 local listFrame = New("ScrollingFrame", {
-    Size=UDim2.new(1,-16,0,190), Position=UDim2.new(0,8,0,80), BackgroundTransparency=1,
-    ScrollBarThickness=2, CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y, Parent=listContainer,
+    Size=UDim2.new(1,0,0,206), Position=UDim2.new(0,0,0,66),
+    BackgroundColor3=BG, BorderSizePixel=0,
+    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(255,120,0),
+    CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
+    Parent=listContainer,
 })
-Instance.new("UIListLayout", listFrame).Padding = UDim.new(0, 4)
+Corner(listFrame, 0)
+Stroke(listFrame, Color3.fromRGB(80,42,8), 1, 0.3)
+do
+    local ul=Instance.new("UIListLayout",listFrame); ul.Padding=UDim.new(0,0)
+    local up=Instance.new("UIPadding",listFrame)
+    up.PaddingLeft=UDim.new(0,4); up.PaddingRight=UDim.new(0,4)
+    up.PaddingTop=UDim.new(0,4); up.PaddingBottom=UDim.new(0,4)
+end
 
 animalToggleBtn.MouseButton1Click:Connect(function()
     listVisible = not listVisible
-    animalToggleBtn.Text = listVisible and "▲  Select Entity" or "▼  Select Entity"
+    animalToggleBtn.Text = listVisible and "▲ SELECT ANIMAL" or "▼ SELECT ANIMAL"
     listContainer.Visible = listVisible
 end)
 
+
 local animalBtns = {}
-function BuildAnimalList(filter)
+local function BuildAnimalList(filter)
     filter = (filter or ""):lower()
     for _,b in ipairs(animalBtns) do pcall(function() b:Destroy() end) end
     animalBtns = {}
     for _,group in ipairs(ANIMALS_BY_RARITY) do
-        local rc = RARITY_COLORS[group.rarity] or Color3.fromRGB(200, 200, 200)
+        local rc = RARITY_COLORS[group.rarity] or TEXT
         for _,name in ipairs(group.names) do
             if filter=="" or name:lower():find(filter,1,true) then
                 local sel = (selectedAnimal==name)
                 local info = ANIMAL_DATA[name]
                 local b = New("TextButton", {
-                    Size=UDim2.new(1,0,0,34), BackgroundColor3=sel and Color3.fromRGB(108,92,231) or Color3.fromRGB(30, 30, 45),
-                    AutoButtonColor=false, Text="", Parent=listFrame,
+                    Size=UDim2.new(1,0,0,26),
+                    BackgroundColor3=sel and Color3.fromRGB(200,85,0) or Color3.fromRGB(8,6,3),
+                    BackgroundTransparency=0,
+                    BorderSizePixel=0, AutoButtonColor=false, Text="", Parent=listFrame,
                 })
-                Corner(b,6)
-                New("Frame", {Size=UDim2.new(0,4,0.6,0), Position=UDim2.new(0,4,0.2,0), BackgroundColor3=rc, Parent=b})
-                
+                Corner(b, 0)
+                -- OG rarity gets a gold left stripe; all other rarities use their RARITY_COLORS value
+                local stripeColor = rc
+                if group.rarity == "OG" then
+                    stripeColor = Color3.fromRGB(255, 215, 0)
+                end
+                New("Frame", {Size=UDim2.new(0,3,0.7,0), Position=UDim2.new(0,0,0.15,0), BackgroundColor3=stripeColor, BorderSizePixel=0, Parent=b})
+                -- Brainrot icon from Fandom wiki (lazy-loaded, cached)
+                local icon = New("ImageLabel", {
+                    Size=UDim2.new(0,24,0,24), Position=UDim2.new(0,8,0.5,-12),
+                    BackgroundTransparency=1, Image="",
+                    ScaleType=Enum.ScaleType.Fit, Parent=b,
+                })
+                do
+                    local capturedIcon = icon
+                    local capturedName = name
+                    task.spawn(function()
+                        -- Wait for the asset helper to be defined (it's set later in the file).
+                        local waited = 0
+                        while not _llGetBrainrotAsset and waited < 5 do
+                            task.wait(0.05); waited = waited + 0.05
+                        end
+                        if not _llGetBrainrotAsset then return end
+                        local ok, asset = pcall(_llGetBrainrotAsset, capturedName)
+                        if ok and asset and capturedIcon and capturedIcon.Parent then
+                            capturedIcon.Image = asset
+                        end
+                    end)
+                end
                 New("TextLabel", {
-                    Size=UDim2.new(0.6,-16,1,0), Position=UDim2.new(0,16,0,0), BackgroundTransparency=1,
-                    Text=name, TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold, TextSize=12,
-                    TextXAlignment=Enum.TextXAlignment.Left, Parent=b,
+                    Size=UDim2.new(0.6,-36,1,0), Position=UDim2.new(0,36,0,0),
+                    BackgroundTransparency=1, Text=name,
+                    TextColor3=Color3.fromRGB(255,245,230),
+                    Font=Enum.Font.Code, TextSize=10,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    TextTruncate=Enum.TextTruncate.AtEnd, Parent=b,
                 })
-                
-                function _refreshRow() b.BackgroundColor3 = (_multiSelectMode and _multiSelected[name] or (not _multiSelectMode and selectedAnimal == name)) and Color3.fromRGB(108,92,231) or Color3.fromRGB(30, 30, 45) end
+                if info and info.price and info.price > 0 then
+                    local function fmt(n)
+                        local function clean(s,sx) return s:gsub("%.0+"..sx,sx):gsub("(%.%d-)0+"..sx,"%1"..sx) end
+                        if n>=1e12 then return "$"..clean(string.format("%.1fT",n/1e12),"T")
+                        elseif n>=1e9 then return "$"..clean(string.format("%.1fB",n/1e9),"B")
+                        elseif n>=1e6 then return "$"..clean(string.format("%.1fM",n/1e6),"M")
+                        elseif n>=1e3 then return "$"..clean(string.format("%.1fK",n/1e3),"K")
+                        else return "$"..tostring(math.floor(n)) end
+                    end
+                    New("TextLabel", {
+                        Size=UDim2.new(0.4,-8,1,0), Position=UDim2.new(0.6,0,0,0),
+                        BackgroundTransparency=1, Text=fmt(info.price),
+                        TextColor3=Color3.fromRGB(255,200,80),
+                        Font=Enum.Font.Code, TextSize=10,
+                        TextXAlignment=Enum.TextXAlignment.Right, Parent=b,
+                    })
+                end
+                -- color row according to current state
+                local function _refreshRow()
+                    if _multiSelectMode then
+                        b.BackgroundColor3 = _multiSelected[name] and Color3.fromRGB(200,85,0) or Color3.fromRGB(8,6,3)
+                    else
+                        b.BackgroundColor3 = (selectedAnimal == name) and Color3.fromRGB(200,85,0) or Color3.fromRGB(8,6,3)
+                    end
+                end
                 _refreshRow()
+                b.MouseEnter:Connect(function()
+                    if _multiSelectMode then
+                        if not _multiSelected[name] then b.BackgroundColor3 = Color3.fromRGB(35,22,5) end
+                    else
+                        if selectedAnimal ~= name then b.BackgroundColor3 = Color3.fromRGB(35,22,5) end
+                    end
+                end)
+                b.MouseLeave:Connect(function() _refreshRow() end)
                 b.MouseButton1Click:Connect(function()
                     if _multiSelectMode then
+                        -- toggle membership in the multi-select set, keep dropdown open
                         _multiSelected[name] = not _multiSelected[name] or nil
-                        _refreshRow(); _refreshMultiToggle(); return
+                        _refreshRow()
+                        _refreshMultiToggle()
+                        return
                     end
-                    -- CORRECTION DE LA SÉLECTION ICI
                     selectedAnimal = name
                     local animalRarity = "Secret"
-                    for _,g in ipairs(ANIMALS_BY_RARITY) do for _,n2 in ipairs(g.names) do if n2==name then animalRarity=g.rarity; break end end end
+                    for _,g in ipairs(ANIMALS_BY_RARITY) do
+                        for _,n2 in ipairs(g.names) do
+                            if n2==name then animalRarity=g.rarity; break end
+                        end
+                    end
                     rarityTag.Text = animalRarity:upper()
-                    rarityTag.TextColor3 = RARITY_COLORS[animalRarity] or Color3.fromRGB(255,255,255)
+                    rarityTag.TextColor3 = RARITY_COLORS[animalRarity] or TEXT
                     selectedName.Text = name
                     _updateSelectedPrice()
-                    listVisible = false; listContainer.Visible = false
-                    animalToggleBtn.Text = "▼  Select Entity"
+                    -- close overlay after selecting
+                    listVisible = false
+                    listContainer.Visible = false
+                    animalToggleBtn.Text = "▼ SELECT ANIMAL"
                     BuildAnimalList(searchBox.Text)
                 end)
                 table.insert(animalBtns, b)
@@ -3456,41 +3712,89 @@ end
 BuildAnimalList("")
 searchBox:GetPropertyChangedSignal("Text"):Connect(function() BuildAnimalList(searchBox.Text) end)
 
-multiToggle.Activated:Connect(function() _multiSelectMode = not _multiSelectMode; if not _multiSelectMode then _multiSelected = {} end; _refreshMultiToggle(); BuildAnimalList(searchBox.Text) end)
+multiToggle.Activated:Connect(function()
+    _multiSelectMode = not _multiSelectMode
+    if not _multiSelectMode then
+        _multiSelected = {}
+    end
+    _refreshMultiToggle()
+    BuildAnimalList(searchBox.Text)
+end)
 _refreshMultiToggle()
 
-local traitsBtn = CreateModernBtn("▼  Traits", brainrotsPage, 4)
-local mutationsBtn = CreateModernBtn("▼  Mutation", brainrotsPage, 6)
-
--- ── SPAWN BUTTON (GLOWING GREEN) ─────────────────────────────────────────
-local spawnBtn = New("TextButton", {
-    Size=UDim2.new(1,0,0,55), BackgroundColor3=Color3.fromRGB(0, 180, 80),
-    Text="EXECUTE SPAWN", TextColor3=Color3.fromRGB(255, 255, 255),
-    Font=Enum.Font.GothamBlack, TextSize=16, AutoButtonColor=false, LayoutOrder=9, Parent=brainrotsPage,
+-- ── TRAITS & MUTATIONS BUTTON ─────────────────────────────
+local traitsBtn = New("TextButton", {
+    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(18,14,8),
+    BorderSizePixel=0, Text="+ TRAITS",
+    TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+    TextSize=12, AutoButtonColor=false, LayoutOrder=4, Parent=brainrotsPage,
 })
-Corner(spawnBtn, 12)
-local spawnStroke = Stroke(spawnBtn, Color3.fromRGB(100, 255, 150), 2, 0.2)
+Corner(traitsBtn, 0)
+Stroke(traitsBtn, Color3.fromRGB(90,55,10), 1, 0.2)
+traitsBtn.MouseEnter:Connect(function() traitsBtn.BackgroundColor3=Color3.fromRGB(50,25,0) end)
+traitsBtn.MouseLeave:Connect(function() traitsBtn.BackgroundColor3=Color3.fromRGB(18,14,8) end)
+local tmBtn = traitsBtn -- legacy alias for downstream code that still references tmBtn
 
-spawnBtn.MouseEnter:Connect(function() 
-    TS:Create(spawnBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {BackgroundColor3=Color3.fromRGB(20, 220, 100)}):Play()
-    TS:Create(spawnStroke, TweenInfo.new(0.2), {Transparency=0}):Play()
-end)
-spawnBtn.MouseLeave:Connect(function() 
-    TS:Create(spawnBtn, TweenInfo.new(0.4), {BackgroundColor3=Color3.fromRGB(0, 180, 80)}):Play()
-    TS:Create(spawnStroke, TweenInfo.new(0.4), {Transparency=0.2}):Play()
-end)
+-- ── QUANTITY ROW ─────────────────────────────────────────
+local spawnCount = 1
+local qtyRow = New("Frame", {
+    Size=UDim2.new(1,0,0,28), BackgroundColor3=Color3.fromRGB(12,8,2),
+    BorderSizePixel=0, LayoutOrder=8, Parent=brainrotsPage,
+})
+Corner(qtyRow, 0)
+Stroke(qtyRow, Color3.fromRGB(80,42,8), 1, 0.3)
 
-spawnBtn.MouseLeave:Connect(function() 
-    TS:Create(spawnBtn, TweenInfo.new(0.4), {BackgroundColor3=Color3.fromRGB(40,160,70), BackgroundTransparency=0.1}):Play()
-    TS:Create(spawnStroke, TweenInfo.new(0.4), {Transparency=0.8}):Play()
+local minusBtn = New("TextButton", {
+    Size=UDim2.new(0,40,1,0), Position=UDim2.new(0,0,0,0),
+    BackgroundColor3=Color3.fromRGB(22,14,6),
+    BorderSizePixel=0, Text="−", TextColor3=Color3.fromRGB(255,140,40),
+    Font=Enum.Font.Code, TextSize=14,
+    AutoButtonColor=false, Parent=qtyRow,
+})
+Corner(minusBtn, 0)
+
+local qtyLbl = New("TextLabel", {
+    Size=UDim2.new(1,-80,1,0), Position=UDim2.new(0,40,0,0),
+    BackgroundTransparency=1, Text="×1",
+    TextColor3=Color3.fromRGB(255,200,100), Font=Enum.Font.Code,
+    TextSize=11, Parent=qtyRow,
+})
+
+local plusBtn = New("TextButton", {
+    Size=UDim2.new(0,40,1,0), Position=UDim2.new(1,-40,0,0),
+    BackgroundColor3=Color3.fromRGB(22,14,6),
+    BorderSizePixel=0, Text="+", TextColor3=Color3.fromRGB(255,140,40),
+    Font=Enum.Font.Code, TextSize=14,
+    AutoButtonColor=false, Parent=qtyRow,
+})
+Corner(plusBtn, 0)
+
+minusBtn.MouseButton1Click:Connect(function()
+    spawnCount = math.max(1, spawnCount - 1); qtyLbl.Text = "x"..spawnCount
 end)
+plusBtn.MouseButton1Click:Connect(function()
+    spawnCount = math.min(10, spawnCount + 1); qtyLbl.Text = "x"..spawnCount
+end)
+minusBtn.MouseEnter:Connect(function() minusBtn.BackgroundColor3=Color3.fromRGB(80,38,0) end)
+minusBtn.MouseLeave:Connect(function() minusBtn.BackgroundColor3=Color3.fromRGB(22,14,6) end)
+plusBtn.MouseEnter:Connect(function() plusBtn.BackgroundColor3=Color3.fromRGB(80,38,0) end)
+plusBtn.MouseLeave:Connect(function() plusBtn.BackgroundColor3=Color3.fromRGB(22,14,6) end)
+
+-- ── SPAWN BUTTON ─────────────────────────────────────────
+local spawnBtn = New("TextButton", {
+    Size=UDim2.new(1,0,0,30), BackgroundColor3=Color3.fromRGB(20,180,80),
+    BorderSizePixel=0, Text="▶  SPAWN",
+    TextColor3=Color3.fromRGB(6,4,0), Font=Enum.Font.Code,
+    TextSize=14, AutoButtonColor=false, LayoutOrder=9, Parent=brainrotsPage,
+})
+Corner(spawnBtn, 0)
 
 spawnBtn.MouseEnter:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(50,180,80) end)
 spawnBtn.MouseLeave:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(40,160,70) end)
 
 
-local statusLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
-local countLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamSemibold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
+local statusLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
+local countLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
 
 -- ── TRAITS DROPDOWN (inline) ─────────────────────────────
 local traitsVisible = false
@@ -3500,8 +3804,8 @@ local tmPopup = New("Frame", {
     BorderSizePixel=0, ClipsDescendants=true,
     Visible=false, LayoutOrder=5, Parent=brainrotsPage,
 })
-Corner(tmPopup, 6)
-Stroke(tmPopup, Color3.fromRGB(50,45,80), 1, 0.2)
+Corner(tmPopup, 0)
+Stroke(tmPopup, Color3.fromRGB(90,45,10), 1, 0.2)
 
 traitsBtn.MouseButton1Click:Connect(function()
     traitsVisible = not traitsVisible
@@ -3512,11 +3816,11 @@ end)
 local traitsGrid = New("ScrollingFrame", {
     Size=UDim2.new(1,0,1,-8), Position=UDim2.new(0,0,0,4),
     BackgroundColor3=BG, BorderSizePixel=0,
-    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(255,120,0),
     CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
     Parent=tmPopup,
 })
-Corner(traitsGrid, 6)
+Corner(traitsGrid, 0)
 do
     local ul=Instance.new("UIListLayout",traitsGrid); ul.Padding=UDim.new(0,0)
     local up=Instance.new("UIPadding",traitsGrid)
@@ -3524,7 +3828,7 @@ do
     up.PaddingTop=UDim.new(0,4); up.PaddingBottom=UDim.new(0,4)
 end
 
-function _updateTraitsBtnText()
+local function _updateTraitsBtnText()
     local sel = {}
     for trait, on in pairs(selectedTraits) do
         if on then table.insert(sel, trait) end
@@ -3544,11 +3848,11 @@ for _,trait in ipairs(TRAITS) do
     local sel = selectedTraits[trait] == true
     local b = New("TextButton", {
         Size=UDim2.new(1,0,0,30),
-        BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+        BackgroundColor3=sel and Color3.fromRGB(200,85,0) or Color3.fromRGB(8,6,3),
         BorderSizePixel=0, AutoButtonColor=false, Text="",
         Parent=traitsGrid,
     })
-    Corner(b,4)
+    Corner(b, 0)
     local icon = TRAIT_ICONS[trait]
     if icon then
         New("ImageLabel", {
@@ -3558,20 +3862,20 @@ for _,trait in ipairs(TRAITS) do
     else
         New("Frame", {
             Size=UDim2.new(0,24,0,24), Position=UDim2.new(0,8,0.5,-12),
-            BackgroundColor3=Color3.fromRGB(50,45,80), BorderSizePixel=0, Parent=b,
+            BackgroundColor3=Color3.fromRGB(90,45,10), BorderSizePixel=0, Parent=b,
         })
     end
     New("TextLabel", {
         Size=UDim2.new(1,-44,1,0), Position=UDim2.new(0,36,0,0),
         BackgroundTransparency=1, Text=trait,
-        TextColor3=Color3.fromRGB(230,230,240),
-        Font=Enum.Font.GothamBold, TextSize=11,
+        TextColor3=Color3.fromRGB(255,245,230),
+        Font=Enum.Font.Code, TextSize=11,
         TextXAlignment=Enum.TextXAlignment.Left,
         TextTruncate=Enum.TextTruncate.AtEnd, Parent=b,
     })
     traitBtns[trait] = b
     b.MouseEnter:Connect(function()
-        if not selectedTraits[trait] then b.BackgroundColor3 = Color3.fromRGB(30,28,42) end
+        if not selectedTraits[trait] then b.BackgroundColor3 = Color3.fromRGB(30,18,8) end
     end)
     b.MouseLeave:Connect(function()
         if not selectedTraits[trait] then b.BackgroundColor3 = BG end
@@ -3579,7 +3883,7 @@ for _,trait in ipairs(TRAITS) do
     b.MouseButton1Click:Connect(function()
         selectedTraits[trait] = not selectedTraits[trait]
         local s = selectedTraits[trait]
-        b.BackgroundColor3 = s and Color3.fromRGB(108,92,231) or BG
+        b.BackgroundColor3 = s and Color3.fromRGB(255,120,0) or BG
         _updateTraitsBtnText()
         _updateSelectedPrice()
     end)
@@ -3588,15 +3892,15 @@ end
 
 -- ── MUTATION DROPDOWN (inline, separate) ─────────────────
 local mutationsBtn = New("TextButton", {
-    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(24,24,30),
+    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(18,14,8),
     BorderSizePixel=0, Text="▼  Mutation",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
     TextSize=12, AutoButtonColor=false, LayoutOrder=6, Parent=brainrotsPage,
 })
-Corner(mutationsBtn, 6)
-Stroke(mutationsBtn, Color3.fromRGB(60,60,90), 1, 0.2)
-mutationsBtn.MouseEnter:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(30,28,42) end)
-mutationsBtn.MouseLeave:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(24,24,30) end)
+Corner(mutationsBtn, 0)
+Stroke(mutationsBtn, Color3.fromRGB(90,55,10), 1, 0.2)
+mutationsBtn.MouseEnter:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(30,18,8) end)
+mutationsBtn.MouseLeave:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(18,14,8) end)
 
 local mutationsVisible = false
 local mutPopup = New("Frame", {
@@ -3605,10 +3909,10 @@ local mutPopup = New("Frame", {
     BorderSizePixel=0, ClipsDescendants=true,
     Visible=false, LayoutOrder=7, Parent=brainrotsPage,
 })
-Corner(mutPopup, 6)
-Stroke(mutPopup, Color3.fromRGB(50,45,80), 1, 0.2)
+Corner(mutPopup, 0)
+Stroke(mutPopup, Color3.fromRGB(90,45,10), 1, 0.2)
 
-function _updateMutationsBtnText()
+local function _updateMutationsBtnText()
     local arrow = mutationsVisible and "▲" or "▼"
     if not selectedMutation or selectedMutation == "None" then
         mutationsBtn.Text = arrow .. "  Mutation"
@@ -3626,11 +3930,11 @@ end)
 local mutGrid = New("ScrollingFrame", {
     Size=UDim2.new(1,0,1,-8), Position=UDim2.new(0,0,0,4),
     BackgroundColor3=BG, BorderSizePixel=0,
-    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(255,120,0),
     CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
     Parent=mutPopup,
 })
-Corner(mutGrid, 6)
+Corner(mutGrid, 0)
 do
     local ul=Instance.new("UIListLayout",mutGrid); ul.Padding=UDim.new(0,0)
     local up=Instance.new("UIPadding",mutGrid)
@@ -3643,11 +3947,11 @@ for _,mut in ipairs(MUTATIONS) do
     local sel = (mut==selectedMutation)
     local b = New("TextButton", {
         Size=UDim2.new(1,0,0,30),
-        BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+        BackgroundColor3=sel and Color3.fromRGB(200,85,0) or Color3.fromRGB(8,6,3),
         BorderSizePixel=0, AutoButtonColor=false, Text="",
         Parent=mutGrid,
     })
-    Corner(b,4)
+    Corner(b, 0)
     local icon = MUTATION_ICONS[mut]
     if icon and icon ~= "" then
         New("ImageLabel", {
@@ -3663,14 +3967,14 @@ for _,mut in ipairs(MUTATIONS) do
     New("TextLabel", {
         Size=UDim2.new(1,-44,1,0), Position=UDim2.new(0,36,0,0),
         BackgroundTransparency=1, Text=(mut=="None") and "Normal" or mut,
-        TextColor3=Color3.fromRGB(230,230,240),
-        Font=Enum.Font.GothamBold, TextSize=11,
+        TextColor3=Color3.fromRGB(255,245,230),
+        Font=Enum.Font.Code, TextSize=11,
         TextXAlignment=Enum.TextXAlignment.Left,
         TextTruncate=Enum.TextTruncate.AtEnd, Parent=b,
     })
     mutBtns[mut] = b
     b.MouseEnter:Connect(function()
-        if selectedMutation ~= mut then b.BackgroundColor3 = Color3.fromRGB(30,28,42) end
+        if selectedMutation ~= mut then b.BackgroundColor3 = Color3.fromRGB(30,18,8) end
     end)
     b.MouseLeave:Connect(function()
         if selectedMutation ~= mut then b.BackgroundColor3 = BG end
@@ -3678,22 +3982,22 @@ for _,mut in ipairs(MUTATIONS) do
     b.MouseButton1Click:Connect(function()
         selectedMutation = mut
         for m,btn in pairs(mutBtns) do
-            btn.BackgroundColor3 = (m==mut) and Color3.fromRGB(108,92,231) or BG
+            btn.BackgroundColor3 = (m==mut) and Color3.fromRGB(255,120,0) or BG
         end
         _updateMutationsBtnText()
         _updateSelectedPrice()
     end)
 end
 
-function SetStatus(msg,col,dur)
+local function SetStatus(msg,col,dur)
     pcall(function()
-        statusLbl.Text=msg; statusLbl.TextColor3=col or Color3.fromRGB(230,230,240)
+        statusLbl.Text=msg; statusLbl.TextColor3=col or Color3.fromRGB(255,245,230)
     end)
     if dur then task.delay(dur,function() pcall(function()
-        statusLbl.Text="Ready"; statusLbl.TextColor3=Color3.fromRGB(230,230,240)
+        statusLbl.Text="Ready"; statusLbl.TextColor3=Color3.fromRGB(255,245,230)
     end) end) end
 end
-function UpdateCount()
+local function UpdateCount()
     local alive={}
     for _,m in ipairs(spawnedModels) do
         if m and m.Parent then table.insert(alive, m) end
@@ -3726,7 +4030,7 @@ do
         { name = "John Pork",    brainrot = "John Pork"            },
     }
 
-    function getPlayerFloor()
+    local function getPlayerFloor()
         local rebirths = 0
         pcall(function()
             local ls = LocalPlayer:FindFirstChild("leaderstats")
@@ -3741,7 +4045,7 @@ do
 
     -- Returns true if the named brainrot is currently on the player's plot,
     -- whether as a real podium animal (server data) OR a KV fake spawn.
-    function _hasBrainrot(name)
+    local function _hasBrainrot(name)
         if not name then return true end  -- skin has no brainrot requirement
         for _, m in ipairs(spawnedModels) do
             if m and m.Parent and m.Name == name then return true end
@@ -3758,7 +4062,7 @@ do
         return ok and found or false
     end
 
-    function getAvailableSkins()
+    local function getAvailableSkins()
         -- All non-OG skins (Christmas, Galaxy, Rainbow, etc.) show always.
         -- OG skins (Skibidi, Headless, Meowl, Strawberry, John Pork) only show
         -- if you currently have that brainrot on your plot. Deleting/trading
@@ -3787,7 +4091,7 @@ do
         FirstFloor=true, SecondFloor=true, ThirdFloor=true,
     }
 
-    function isInsideProtected(obj, plot)
+    local function isInsideProtected(obj, plot)
         local p = obj.Parent
         while p and p ~= plot do
             if neverHide[p.Name] then return true end
@@ -3798,7 +4102,7 @@ do
         return false
     end
 
-    function hidePlotParts(plot)
+    local function hidePlotParts(plot)
         for _, obj in plot:GetDescendants() do
             if obj:IsA("BasePart")
             and not neverHide[obj.Name]
@@ -3811,7 +4115,7 @@ do
         end
     end
 
-    function showPlotParts()
+    local function showPlotParts()
         for obj, v in pairs(_hiddenParts) do
             if typeof(obj) == "Instance" and obj.Parent then
                 pcall(function() obj.LocalTransparencyModifier = v end)
@@ -3848,11 +4152,11 @@ do
         end
     end)
 
-    function loadSkinModels(callback)
+    local function loadSkinModels(callback)
         if _skinFolder then callback(_skinFolder); return end
         if _skinLoading then SetStatus("Still loading skins...", Color3.fromRGB(255,150,50), 2); return end
         _skinLoading = true
-        SetStatus("Loading skin models...", Color3.fromRGB(108,92,231), 0)
+        SetStatus("Loading skin models...", Color3.fromRGB(255,120,0), 0)
         task.spawn(function()
             local haveFile = false
             pcall(function() haveFile = isfile(SKIN_FILE) end)
@@ -3871,7 +4175,7 @@ do
             end
 
             if not haveFile then
-                SetStatus("Downloading base skins...", Color3.fromRGB(108,92,231), 0)
+                SetStatus("Downloading base skins...", Color3.fromRGB(255,120,0), 0)
                 local ok, data = pcall(function()
                     return game:HttpGet(SKIN_URL)
                 end)
@@ -3966,7 +4270,7 @@ do
 
     -- A part counts as "laser-related" if any ancestor or sibling-folder is named Laser/LaserHitbox,
     -- OR if its own name contains "Laser", OR if it visibly is a Beam.
-    function _isLaserLike(inst, plot)
+    local function _isLaserLike(inst, plot)
         if inst:IsA("Beam") then return true end
         local nameHint = inst.Name and (inst.Name:lower():find("laser") ~= nil)
         if nameHint then return true end
@@ -3987,7 +4291,7 @@ do
         return false
     end
 
-    function _restoreLasers()
+    local function _restoreLasers()
         if _laserStreamConn then pcall(function() _laserStreamConn:Disconnect() end); _laserStreamConn = nil end
         _activeLaserSkin = nil
         for inst, st in pairs(_originalLaserState) do
@@ -4007,7 +4311,7 @@ do
         _originalLaserState = {}
     end
 
-    function _isReddish(c)
+    local function _isReddish(c)
         return c.R > 0.6 and c.G < 0.4 and c.B < 0.4
     end
 
@@ -4016,7 +4320,7 @@ do
         Claim = true, CashPad = true, Multiplier = true, AnimalPodiums = true,
         DeliveryBox = true, FriendPanel = true, PlotSign = true, SkinPlotSign = true,
     }
-    function _hasBlockedAncestor(d, plot)
+    local function _hasBlockedAncestor(d, plot)
         local p = d.Parent
         while p and p ~= plot do
             if LASER_BLOCKLIST_ANCESTORS[p.Name] then return true end
@@ -4025,7 +4329,7 @@ do
         return false
     end
     -- Conversely: must be inside a Laser/LaserHitbox folder
-    function _hasLaserAncestor(d, plot)
+    local function _hasLaserAncestor(d, plot)
         local p = d.Parent
         while p and p ~= plot do
             if p.Name == "Laser" or p.Name == "LaserHitbox" then return true end
@@ -4035,7 +4339,7 @@ do
     end
 
     -- Apply our laser look to a single newly-spotted part or beam
-    function _applyLaserLookTo(d, look)
+    local function _applyLaserLookTo(d, look)
         if _originalLaserState[d] then return end
         local plot = GetPlayerPlot()
         if not plot then return end
@@ -4115,10 +4419,10 @@ do
     -- otherwise overwrite our visual sync each time it re-renders).
     task.spawn(function()
         local hookedSettings = nil
-        function hook(sg)
+        local function hook(sg)
             if hookedSettings == sg then return end
             hookedSettings = sg
-            function reapply()
+            local function reapply()
                 if not _selectedSkin or _selectedSkin == "" then return end
                 for i = 1, 8 do
                     task.delay(i * 0.1, function()
@@ -4150,7 +4454,7 @@ do
         end
     end)
 
-    function _recolorLasersForSkin(skinName)
+    local function _recolorLasersForSkin(skinName)
         _restoreLasers()
         if _laserStreamConn then pcall(function() _laserStreamConn:Disconnect() end); _laserStreamConn = nil end
         _activeLaserSkin = skinName
@@ -4190,7 +4494,7 @@ do
         end
     end
 
-    function removeSkin()
+    local function removeSkin()
         if _activeSkinClone then
             pcall(function() _activeSkinClone:Destroy() end)
             _activeSkinClone = nil
@@ -4203,7 +4507,7 @@ do
         SetStatus("Visual base removed", Color3.fromRGB(150,150,180), 2)
     end
 
-    function applySkin(skinName, folder)
+    local function applySkin(skinName, folder)
         local skinEntry = folder:FindFirstChild(skinName)
         if not skinEntry then
             local found = {}
@@ -4385,7 +4689,7 @@ do
     New("TextLabel", {
         Size=UDim2.new(1,0,0,14), BackgroundTransparency=1,
         Text="BASE SKIN CHANGER", TextColor3=ACCENT,
-        Font=Enum.Font.GothamBold, TextSize=9,
+        Font=Enum.Font.Code, TextSize=9,
         TextXAlignment=Enum.TextXAlignment.Left,
         LayoutOrder=1, Parent=basePage,
     })
@@ -4393,55 +4697,55 @@ do
     -- toggle button (matches animal toggle style)
     local skinListVisible = false
     local skinToggleBtn = New("TextButton", {
-        Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(24,24,30),
+        Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(18,14,8),
         BorderSizePixel=0, Text="▼  Select Base Skin",
-        TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+        TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
         TextSize=12, AutoButtonColor=false, LayoutOrder=2, Parent=basePage,
     })
-    Corner(skinToggleBtn, 6)
-    Stroke(skinToggleBtn, Color3.fromRGB(60,60,90), 1, 0.2)
-    skinToggleBtn.MouseEnter:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(30,28,42) end)
-    skinToggleBtn.MouseLeave:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(24,24,30) end)
+    Corner(skinToggleBtn, 0)
+    Stroke(skinToggleBtn, Color3.fromRGB(90,55,10), 1, 0.2)
+    skinToggleBtn.MouseEnter:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(30,18,8) end)
+    skinToggleBtn.MouseLeave:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(18,14,8) end)
 
     -- inline dropdown panel (matches animal/traits/mutation pattern)
     local skinListPanel = New("Frame", {
         Size=UDim2.new(1, 0, 0, 240),
-        BackgroundColor3=Color3.fromRGB(30,28,42),
+        BackgroundColor3=Color3.fromRGB(30,18,8),
         BorderSizePixel=0, ClipsDescendants=true,
         Visible=false, LayoutOrder=3, Parent=basePage,
     })
-    Corner(skinListPanel, 6)
-    Stroke(skinListPanel, Color3.fromRGB(50,45,80), 1, 0.2)
+    Corner(skinListPanel, 0)
+    Stroke(skinListPanel, Color3.fromRGB(90,45,10), 1, 0.2)
 
     local skinApplyBtn = New("TextButton", {
         Size=UDim2.new(1,0,0,32), BackgroundColor3=BTNGRN,
         Text="Apply Skin", TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=12, AutoButtonColor=false,
+        Font=Enum.Font.Code, TextSize=12, AutoButtonColor=false,
         BorderSizePixel=0, LayoutOrder=4, Parent=basePage,
     })
-    Corner(skinApplyBtn, 5)
+    Corner(skinApplyBtn, 0)
     skinApplyBtn.MouseEnter:Connect(function() skinApplyBtn.BackgroundColor3=Color3.fromRGB(60,200,100) end)
     skinApplyBtn.MouseLeave:Connect(function() skinApplyBtn.BackgroundColor3=BTNGRN end)
 
     local skinRemoveBtn = New("TextButton", {
         Size=UDim2.new(1,0,0,32), BackgroundColor3=BTNRED,
         Text="Reset Base", TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=12, AutoButtonColor=false,
+        Font=Enum.Font.Code, TextSize=12, AutoButtonColor=false,
         BorderSizePixel=0, LayoutOrder=5, Parent=basePage,
     })
-    Corner(skinRemoveBtn, 5)
+    Corner(skinRemoveBtn, 0)
     skinRemoveBtn.MouseEnter:Connect(function() skinRemoveBtn.BackgroundColor3=Color3.fromRGB(220,60,60) end)
     skinRemoveBtn.MouseLeave:Connect(function() skinRemoveBtn.BackgroundColor3=BTNRED end)
 
     local skinListFrame = New("ScrollingFrame", {
         Size=UDim2.new(1,0,1,0), Position=UDim2.new(0,0,0,0),
         BackgroundColor3=BG, BorderSizePixel=0,
-        ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+        ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(255,120,0),
         CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
         Parent=skinListPanel,
     })
-    Corner(skinListFrame, 6)
-    Stroke(skinListFrame, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(skinListFrame, 0)
+    Stroke(skinListFrame, Color3.fromRGB(80,42,8), 1, 0.3)
     do
         local ul=Instance.new("UIListLayout",skinListFrame); ul.Padding=UDim.new(0,0)
         local up=Instance.new("UIPadding",skinListFrame)
@@ -4450,7 +4754,7 @@ do
     end
 
     local skinBtns = {}
-    function BuildSkinList()
+    local function BuildSkinList()
         for _,b in ipairs(skinBtns) do pcall(function() b:Destroy() end) end
         skinBtns = {}
         local available = getAvailableSkins()
@@ -4458,7 +4762,7 @@ do
             local lbl = New("TextLabel", {
                 Size=UDim2.new(1,0,0,30), BackgroundTransparency=1,
                 Text="No skins available — try spawning a brainrot!",
-                TextColor3=Color3.fromRGB(150,140,180), Font=Enum.Font.Gotham,
+                TextColor3=Color3.fromRGB(150,140,180), Font=Enum.Font.Code,
                 TextSize=11, Parent=skinListFrame,
             })
             table.insert(skinBtns, lbl)
@@ -4468,20 +4772,20 @@ do
             local sel = (_selectedSkin == skin.name)
             local b = New("TextButton", {
                 Size=UDim2.new(1,0,0,30),
-                BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+                BackgroundColor3=sel and Color3.fromRGB(200,85,0) or Color3.fromRGB(8,6,3),
                 BackgroundTransparency=0,
                 BorderSizePixel=0, AutoButtonColor=false, Text="", Parent=skinListFrame,
             })
-            Corner(b, 4)
+            Corner(b, 0)
             New("TextLabel", {
                 Size=UDim2.new(1,-16,1,0), Position=UDim2.new(0,12,0,0),
                 BackgroundTransparency=1, Text=skin.name,
-                TextColor3=Color3.fromRGB(230,230,240),
-                Font=Enum.Font.GothamBold, TextSize=11,
+                TextColor3=Color3.fromRGB(255,245,230),
+                Font=Enum.Font.Code, TextSize=11,
                 TextXAlignment=Enum.TextXAlignment.Left, Parent=b,
             })
             b.MouseEnter:Connect(function()
-                if _selectedSkin ~= skin.name then b.BackgroundColor3=Color3.fromRGB(30,28,42) end
+                if _selectedSkin ~= skin.name then b.BackgroundColor3=Color3.fromRGB(30,18,8) end
             end)
             b.MouseLeave:Connect(function()
                 if _selectedSkin ~= skin.name then b.BackgroundColor3=BG end
@@ -4575,7 +4879,7 @@ do
 
     -- re-hide plot parts when the game adds new descendants (sell/trade refreshes plot)
     local _plotConn = nil
-    function watchPlot()
+    local function watchPlot()
         if _plotConn then pcall(function() _plotConn:Disconnect() end) end
         local plot = GetPlayerPlot()
         if not plot then return end
@@ -4615,7 +4919,7 @@ do
     }
     local _injectedBtns = {}
 
-    function injectIntoGameUI()
+    local function injectIntoGameUI()
         -- Clear previous KV injections
         for _, b in ipairs(_injectedBtns) do pcall(function() b:Destroy() end) end
         _injectedBtns = {}
@@ -4671,7 +4975,7 @@ do
         -- of the game's buttons use Scale sizing where Size.Y.Offset = 0.
         local refSize = template.Size
         local refAbsY = 0
-        function grabRefSize(parent)
+        local function grabRefSize(parent)
             for _, c in parent:GetChildren() do
                 if c == template then continue end
                 if c.Name:sub(1,3) == "KV_" then continue end
@@ -4697,7 +5001,7 @@ do
 
         -- HIDE every existing real game button in the dropdown. We don't destroy
         -- them (the game might re-show on its own re-render), just Visible=false.
-        function hideRealButtons(parent)
+        local function hideRealButtons(parent)
             for _, c in parent:GetChildren() do
                 if c == template then continue end
                 if c.Name:sub(1,3) == "KV_" then continue end
@@ -4718,7 +5022,7 @@ do
             btn.LayoutOrder = i
             btn.Size = refSize  -- exactly match the game's real button dimensions
 
-            local colors = SKIN_COLORS[skin.name] or { main = Color3.fromRGB(108,92,231), stroke = Color3.fromRGB(80,70,130) }
+            local colors = SKIN_COLORS[skin.name] or { main = Color3.fromRGB(255,120,0), stroke = Color3.fromRGB(80,70,130) }
             btn.BackgroundColor3 = colors.main
             local btnStroke = btn:FindFirstChildOfClass("UIStroke")
             if btnStroke then btnStroke.Color = colors.stroke end
@@ -4927,12 +5231,12 @@ end
 local _pendingSpawns = {}  -- queue of {name, mutation, traits} to spawn
 local _slotOverride  = nil -- when non-nil, DoSpawn targets this exact podium key
 local DoSpawn  -- forward declaration
-function SpawnOneAnimal(animalName, mutation, traitsArr)
+local function SpawnOneAnimal(animalName, mutation, traitsArr)
     table.insert(_pendingSpawns, {name=animalName, mutation=mutation or "None", traits=traitsArr or {}})
     pcall(InjectToGameIndex, animalName, mutation or "None")
 end
 
-function DrainPendingSpawns()
+local function DrainPendingSpawns()
     if #_pendingSpawns == 0 then return end
     local copy = {}
     for _, v in ipairs(_pendingSpawns) do table.insert(copy, v) end
@@ -5251,8 +5555,8 @@ DoSpawn = function()
         end
 
         -- Generation + Price from baked ANIMAL_DATA
-        function fmt(n)
-            function clean(s, suffix)
+        local function fmt(n)
+            local function clean(s, suffix)
                 return s:gsub("%.0+"..suffix, suffix):gsub("(%.%d-)0+"..suffix, "%1"..suffix)
             end
             if n >= 1e12 then return clean(string.format("%.1fT", n/1e12), "T")
@@ -5395,7 +5699,7 @@ DoSpawn = function()
         local claimHitbox = claim and claim:FindFirstChild("Hitbox")
         if not claimMain then return end
 
-        function GetPlotMultiplier()
+        local function GetPlotMultiplier()
             local mult = 1
             pcall(function()
                 local m = plot:FindFirstChild("Multiplier")
@@ -5434,8 +5738,8 @@ DoSpawn = function()
         local offlineLbl = cashGui:FindFirstChild("Offline")
         if collectLbl then collectLbl.Visible = true end
 
-        function fmt(n)
-            function clean(s, suffix)
+        local function fmt(n)
+            local function clean(s, suffix)
                 return s:gsub("%.0+"..suffix, suffix):gsub("(%.%d-)0+"..suffix, "%1"..suffix)
             end
             if n >= 1e12 then return clean(string.format("%.1fT", n/1e12), "T")
@@ -5543,8 +5847,8 @@ DoSpawn = function()
         local animalInfo = ANIMAL_DATA[selectedAnimal]
         local sellPrice = animalInfo and animalInfo.price or 0
 
-        function fmt(n)
-            function clean(s, suffix)
+        local function fmt(n)
+            local function clean(s, suffix)
                 return s:gsub("%.0+"..suffix, suffix):gsub("(%.%d-)0+"..suffix, "%1"..suffix)
             end
             if n >= 1e12 then return clean(string.format("%.1fT", n/1e12), "T")
@@ -5597,7 +5901,7 @@ DoSpawn = function()
                     local capturedRarity = animalRarity
                     local capturedAtt = promptAtt
                     local fConn; fConn = prompt.Triggered:Connect(function()
-                        function doSell()
+                        local function doSell()
                             -- destroy model and clean up (client-side only, no server remote)
                             pcall(function() capturedModel:Destroy() end)
                             modelSnapshots[capturedModel] = nil
@@ -5665,7 +5969,7 @@ DoSpawn = function()
                                     if desc then desc.Text = "Do you want to sell "..capturedName.."?" end
                                     clone.Parent = confirmGui
                                     local done = false
-                                    function finish(yes)
+                                    local function finish(yes)
                                         if done then return end; done = true
                                         clone:Destroy()
                                         if yes then
@@ -5837,7 +6141,7 @@ SetStatus("Ready — select an animal to spawn",SUBTEXT)
 do
     -- Section helper: creates a collapsible group that contains rows.
     -- Returns the content Frame that callers parent rows to.
-    function MakeMiscSection(title, layoutOrder, openByDefault)
+    local function MakeMiscSection(title, layoutOrder, openByDefault)
         local section = New("Frame", {
             Size=UDim2.new(1,0,0,0),
             AutomaticSize=Enum.AutomaticSize.Y,
@@ -5849,16 +6153,16 @@ do
         secLayout.Padding = UDim.new(0, 6)
 
         local hdrBtn = New("TextButton", {
-            Size=UDim2.new(1,0,0,32),
-            BackgroundColor3=Color3.fromRGB(28,28,38),
+            Size=UDim2.new(1,0,0,28),
+            BackgroundColor3=Color3.fromRGB(22,14,6),
             BorderSizePixel=0, AutoButtonColor=false, Text="",
             LayoutOrder=1, Parent=section,
         })
-        Corner(hdrBtn, 6); Stroke(hdrBtn, Color3.fromRGB(60,60,80), 1, 0.2)
+        Corner(hdrBtn, 0); Stroke(hdrBtn, Color3.fromRGB(90,55,10), 1, 0.2)
         local arrowLbl = New("TextLabel", {
             Size=UDim2.new(1,-20,1,0), Position=UDim2.new(0,10,0,0),
             BackgroundTransparency=1, Text=(openByDefault and "▼  " or "▶  ") .. title,
-            TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
             TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=hdrBtn,
         })
 
@@ -5876,7 +6180,7 @@ do
         hdrBtn.Activated:Connect(function()
             visible = not visible
             content.Visible = visible
-            arrowLbl.Text = (visible and "▼  " or "▶  ") .. title
+            arrowLbl.Text = (visible and "▼ " or "▶ ") .. title:upper()
         end)
         return content
     end
@@ -5886,30 +6190,30 @@ do
     local dataContent = MakeMiscSection("Spawned Brainrots", 3, false)
 
     local row = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=1, Parent=cfgContent,
     })
-    Corner(row, 6); Stroke(row, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row, 0); Stroke(row, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="Auto-Restore Spawns on Rejoin",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row,
     })
     local toggleBtn = New("TextButton", {
-        Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=autoRestoreEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        Size=UDim2.new(0,58,0,22), Position=UDim2.new(1,-68,0.5,-11),
+        BackgroundColor3=autoRestoreEnabled and ACCENT or Color3.fromRGB(90,55,10),
         BorderSizePixel=0, AutoButtonColor=false,
         Text=autoRestoreEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row,
+        Font=Enum.Font.Code, TextSize=11, Parent=row,
     })
-    Corner(toggleBtn, 5)
+    Corner(toggleBtn, 0)
     toggleBtn.Activated:Connect(function()
         autoRestoreEnabled = not autoRestoreEnabled
         toggleBtn.Text = autoRestoreEnabled and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = autoRestoreEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        toggleBtn.BackgroundColor3 = autoRestoreEnabled and ACCENT or Color3.fromRGB(90,55,10)
         SaveConfig()
     end)
 
@@ -5917,93 +6221,64 @@ do
     -- Turning it off pauses auto-writes but keeps the existing save intact;
     -- Save Now still works manually, and turning this back on resumes saves.
     local row2 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=2, Parent=cfgContent,
     })
-    Corner(row2, 6); Stroke(row2, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row2, 0); Stroke(row2, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="Auto-Save Base Changes",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row2,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row2,
     })
     local saveToggleBtn = New("TextButton", {
-        Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=autoSaveEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        Size=UDim2.new(0,58,0,22), Position=UDim2.new(1,-68,0.5,-11),
+        BackgroundColor3=autoSaveEnabled and ACCENT or Color3.fromRGB(90,55,10),
         BorderSizePixel=0, AutoButtonColor=false,
         Text=autoSaveEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row2,
+        Font=Enum.Font.Code, TextSize=11, Parent=row2,
     })
-    Corner(saveToggleBtn, 5)
+    Corner(saveToggleBtn, 0)
     saveToggleBtn.Activated:Connect(function()
         autoSaveEnabled = not autoSaveEnabled
         saveToggleBtn.Text = autoSaveEnabled and "ON" or "OFF"
-        saveToggleBtn.BackgroundColor3 = autoSaveEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        saveToggleBtn.BackgroundColor3 = autoSaveEnabled and ACCENT or Color3.fromRGB(90,55,10)
         -- SaveConfig itself bypasses the autoSave gate, so the toggle's own
         -- state is always persisted (the gate only governs ScheduleSave).
         SaveConfig()
     end)
 
-    -- Community webhook row: opt-in. When on, real trade-received brainrots
-    -- with gen >= 50M/s post to the shared Discord channel.
-    local row3 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=3, Parent=cfgContent,
-    })
-    Corner(row3, 6); Stroke(row3, Color3.fromRGB(50,50,70), 1, 0.3)
-    New("TextLabel", {
-        Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
-        BackgroundTransparency=1,
-        Text="Share Pulls to Community Feed",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row3,
-    })
-    local hookToggleBtn = New("TextButton", {
-        Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=webhookEnabled and ACCENT or Color3.fromRGB(60,60,80),
-        BorderSizePixel=0, AutoButtonColor=false,
-        Text=webhookEnabled and "ON" or "OFF",
-        TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row3,
-    })
-    Corner(hookToggleBtn, 5)
-    hookToggleBtn.Activated:Connect(function()
-        webhookEnabled = not webhookEnabled
-        hookToggleBtn.Text = webhookEnabled and "ON" or "OFF"
-        hookToggleBtn.BackgroundColor3 = webhookEnabled and ACCENT or Color3.fromRGB(60,60,80)
-        SaveConfig()
-    end)
-
+        -- [Share Pulls to Community Feed removed]
     -- Hide UI on Rejoin: when on, the menu starts hidden after a rejoin
     -- so the user has to press the toggle key to bring it up. Useful when
     -- joining around people who shouldn't see the menu pop up.
     local row3b = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=4, Parent=cfgContent,
     })
-    Corner(row3b, 6); Stroke(row3b, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row3b, 0); Stroke(row3b, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="Hide UI on Rejoin",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row3b,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row3b,
     })
     local hideToggleBtn = New("TextButton", {
-        Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=hideOnRejoinEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        Size=UDim2.new(0,58,0,22), Position=UDim2.new(1,-68,0.5,-11),
+        BackgroundColor3=hideOnRejoinEnabled and ACCENT or Color3.fromRGB(90,55,10),
         BorderSizePixel=0, AutoButtonColor=false,
         Text=hideOnRejoinEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row3b,
+        Font=Enum.Font.Code, TextSize=11, Parent=row3b,
     })
-    Corner(hideToggleBtn, 5)
+    Corner(hideToggleBtn, 0)
     hideToggleBtn.Activated:Connect(function()
         hideOnRejoinEnabled = not hideOnRejoinEnabled
         hideToggleBtn.Text = hideOnRejoinEnabled and "ON" or "OFF"
-        hideToggleBtn.BackgroundColor3 = hideOnRejoinEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        hideToggleBtn.BackgroundColor3 = hideOnRejoinEnabled and ACCENT or Color3.fromRGB(90,55,10)
         local ok, err = pcall(SaveConfig)
         if ok then
             SetStatus("Hide on Rejoin: " .. (hideOnRejoinEnabled and "ON (saved)" or "OFF (saved)"),
@@ -6020,31 +6295,31 @@ do
     -- otherwise the misc tab blows past Luau's 200-local register limit.
     do
     local row4 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=1, Parent=keysContent,
     })
-    Corner(row4, 6); Stroke(row4, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row4, 0); Stroke(row4, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="UI Toggle Key",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row4,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row4,
     })
     local keyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=Color3.fromRGB(90,55,10), BorderSizePixel=0,
         AutoButtonColor=false, Text=toggleKeyName,
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row4,
+        Font=Enum.Font.Code, TextSize=11, Parent=row4,
     })
-    Corner(keyBtn, 5)
+    Corner(keyBtn, 0)
 
     local listening   = false
     local pendingKey  = nil
     local listenConn  = nil
 
-    function refreshKeyBtn()
+    local function refreshKeyBtn()
         if listening then
             keyBtn.Text = pendingKey
                 and (pendingKey .. "  (click off to save)")
@@ -6052,11 +6327,11 @@ do
             keyBtn.BackgroundColor3 = ACCENT
         else
             keyBtn.Text = toggleKeyName
-            keyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            keyBtn.BackgroundColor3 = Color3.fromRGB(90,55,10)
         end
     end
 
-    function stopListening(commit)
+    local function stopListening(commit)
         if not listening then return end
         if commit and pendingKey then
             toggleKeyName = pendingKey
@@ -6068,7 +6343,7 @@ do
         refreshKeyBtn()
     end
 
-    function startListening()
+    local function startListening()
         if listening then return end
         listening  = true
         pendingKey = nil
@@ -6111,32 +6386,32 @@ do
     -- teleports the player back into the same place (new server).
     do
     local row5 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=2, Parent=keysContent,
     })
-    Corner(row5, 6); Stroke(row5, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row5, 0); Stroke(row5, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="Rejoin Key",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row5,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row5,
     })
     local rejoinBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=Color3.fromRGB(90,55,10), BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(rejoinKeyName ~= "" and rejoinKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row5,
+        Font=Enum.Font.Code, TextSize=11, Parent=row5,
     })
-    Corner(rejoinBtn, 5)
+    Corner(rejoinBtn, 0)
 
     local rjListening  = false
     local rjPending    = nil
     local rjConn       = nil
 
-    function refreshRejoinBtn()
+    local function refreshRejoinBtn()
         if rjListening then
             rejoinBtn.Text = rjPending
                 and (rjPending .. "  (click off to save)")
@@ -6144,11 +6419,11 @@ do
             rejoinBtn.BackgroundColor3 = ACCENT
         else
             rejoinBtn.Text = (rejoinKeyName ~= "" and rejoinKeyName) or "Unbound"
-            rejoinBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            rejoinBtn.BackgroundColor3 = Color3.fromRGB(90,55,10)
         end
     end
 
-    function rjStop(commit)
+    local function rjStop(commit)
         if not rjListening then return end
         if commit and rjPending ~= nil then
             rejoinKeyName = rjPending  -- may be "" to unbind
@@ -6160,7 +6435,7 @@ do
         refreshRejoinBtn()
     end
 
-    function rjStart()
+    local function rjStart()
         if rjListening then return end
         rjListening = true
         rjPending   = nil
@@ -6201,45 +6476,45 @@ do
     -- Strictly visual — no networking.
     do
     local row6 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=3, Parent=keysContent,
     })
-    Corner(row6, 6); Stroke(row6, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row6, 0); Stroke(row6, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="Dupe Item Key",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row6,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row6,
     })
     local dupeKeyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=Color3.fromRGB(90,55,10), BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(_debugDupeKeyName ~= "" and _debugDupeKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row6,
+        Font=Enum.Font.Code, TextSize=11, Parent=row6,
     })
-    Corner(dupeKeyBtn, 5)
+    Corner(dupeKeyBtn, 0)
 
     local dkListening, dkPending, dkConn = false, nil, nil
-    function refreshDupeBtn()
+    local function refreshDupeBtn()
         if dkListening then
             dupeKeyBtn.Text = dkPending and (dkPending.."  (click off to save)") or "Press a key... (Del = unbind)"
             dupeKeyBtn.BackgroundColor3 = ACCENT
         else
             dupeKeyBtn.Text = (_debugDupeKeyName ~= "" and _debugDupeKeyName) or "Unbound"
-            dupeKeyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            dupeKeyBtn.BackgroundColor3 = Color3.fromRGB(90,55,10)
         end
     end
-    function dkStop(commit)
+    local function dkStop(commit)
         if not dkListening then return end
         if commit and dkPending ~= nil then _debugDupeKeyName = dkPending; SaveConfig() end
         dkListening = false; dkPending = nil
         if dkConn then dkConn:Disconnect(); dkConn = nil end
         refreshDupeBtn()
     end
-    function dkStart()
+    local function dkStart()
         if dkListening then return end
         dkListening = true; dkPending = nil; refreshDupeBtn()
         dkConn = UserInputService.InputBegan:Connect(function(input)
@@ -6266,45 +6541,45 @@ do
     -- captured from the most recent real trade session.  Visual-only.
     do
     local row7 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=4, Parent=keysContent,
     })
-    Corner(row7, 6); Stroke(row7, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row7, 0); Stroke(row7, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
         Text="Trade Last Player",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row7,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row7,
     })
     local afKeyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=Color3.fromRGB(90,55,10), BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(_debugAutoFillKeyName ~= "" and _debugAutoFillKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row7,
+        Font=Enum.Font.Code, TextSize=11, Parent=row7,
     })
-    Corner(afKeyBtn, 5)
+    Corner(afKeyBtn, 0)
 
     local afListening, afPending, afConn = false, nil, nil
-    function refreshAfBtn()
+    local function refreshAfBtn()
         if afListening then
             afKeyBtn.Text = afPending and (afPending.."  (click off to save)") or "Press a key... (Del = unbind)"
             afKeyBtn.BackgroundColor3 = ACCENT
         else
             afKeyBtn.Text = (_debugAutoFillKeyName ~= "" and _debugAutoFillKeyName) or "Unbound"
-            afKeyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            afKeyBtn.BackgroundColor3 = Color3.fromRGB(90,55,10)
         end
     end
-    function afStop(commit)
+    local function afStop(commit)
         if not afListening then return end
         if commit and afPending ~= nil then _debugAutoFillKeyName = afPending; SaveConfig() end
         afListening = false; afPending = nil
         if afConn then afConn:Disconnect(); afConn = nil end
         refreshAfBtn()
     end
-    function afStart()
+    local function afStart()
         if afListening then return end
         afListening = true; afPending = nil; refreshAfBtn()
         afConn = UserInputService.InputBegan:Connect(function(input)
@@ -6329,43 +6604,43 @@ do
     -- ── Trade Notif Key ──────────────────────────────────
     do
     local row8 = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
+        Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(16,10,4),
         BorderSizePixel=0, LayoutOrder=5, Parent=keysContent,
     })
-    Corner(row8, 6); Stroke(row8, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row8, 0); Stroke(row8, Color3.fromRGB(80,42,8), 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1, Text="Trade Notification",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row8,
+        TextColor3=Color3.fromRGB(200,150,80), Font=Enum.Font.Code,
+        TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=row8,
     })
     local tnKeyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=Color3.fromRGB(90,55,10), BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(_debugTradeNotifKeyName ~= "" and _debugTradeNotifKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, Parent=row8,
+        Font=Enum.Font.Code, TextSize=11, Parent=row8,
     })
-    Corner(tnKeyBtn, 5)
+    Corner(tnKeyBtn, 0)
     local tnListening, tnPending, tnConn = false, nil, nil
-    function refreshTnBtn()
+    local function refreshTnBtn()
         if tnListening then
             tnKeyBtn.Text = tnPending and (tnPending.."  (click off to save)") or "Press a key... (Del = unbind)"
             tnKeyBtn.BackgroundColor3 = ACCENT
         else
             tnKeyBtn.Text = (_debugTradeNotifKeyName ~= "" and _debugTradeNotifKeyName) or "Unbound"
-            tnKeyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            tnKeyBtn.BackgroundColor3 = Color3.fromRGB(90,55,10)
         end
     end
-    function tnStop(commit)
+    local function tnStop(commit)
         if not tnListening then return end
         if commit and tnPending ~= nil then _debugTradeNotifKeyName = tnPending; SaveConfig() end
         tnListening = false; tnPending = nil
         if tnConn then tnConn:Disconnect(); tnConn = nil end
         refreshTnBtn()
     end
-    function tnStart()
+    local function tnStart()
         if tnListening then return end
         tnListening = true; tnPending = nil; refreshTnBtn()
         tnConn = UserInputService.InputBegan:Connect(function(input)
@@ -6394,10 +6669,10 @@ do
     local statusLbl2 = New("TextLabel", {
         Size=UDim2.new(1,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1, Text="",
-        TextColor3=SUBTEXT, Font=Enum.Font.Gotham,
+        TextColor3=SUBTEXT, Font=Enum.Font.Code,
         TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=statusRow,
     })
-    function RefreshStatus()
+    local function RefreshStatus()
         local saved = (_loadedConfig and _loadedConfig.spawns) and #_loadedConfig.spawns or 0
         local live  = #spawnedModels
         statusLbl2.Text = ("Saved: %d   |   Live: %d"):format(saved, live)
@@ -6418,11 +6693,11 @@ do
         Size=UDim2.new(1,0,1,0), BackgroundColor3=Color3.fromRGB(70,40,40),
         BorderSizePixel=0, AutoButtonColor=false, Text="Clear Spawned",
         TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=11, LayoutOrder=1, Parent=btnRow,
+        Font=Enum.Font.Code, TextSize=11, LayoutOrder=1, Parent=btnRow,
     })
-    Corner(clearBtn, 5)
+    Corner(clearBtn, 0)
 
-    function RestoreFromConfig(cfg)
+    local function RestoreFromConfig(cfg)
         if not cfg or type(cfg.spawns) ~= "table" then return 0 end
         local n = 0
         -- burst restore: fire DoSpawn for every saved item in the same frame,
@@ -6562,7 +6837,7 @@ do
     -- working Grab/Sell prompts.
     if autoRestoreEnabled and _loadedConfig then
         task.defer(function()
-            function plotReady()
+            local function plotReady()
                 local plot = GetPlayerPlot()
                 if not plot then return false end
                 local pods = plot:FindFirstChild("AnimalPodiums")
@@ -6617,7 +6892,7 @@ do
 
     -- Apply the current sign content to the active fake trade's YourSign center.
     -- Also kicks off / stops the cycler depending on randomEnabled.
-    function _applySignToTrade()
+    local function _applySignToTrade()
         if _signCycleConn then pcall(function() _signCycleConn:Disconnect() end); _signCycleConn = nil end
         local pg = LocalPlayer:FindFirstChild("PlayerGui")
         local trade = pg and pg:FindFirstChild("KV_FakeTrade")
@@ -6627,7 +6902,7 @@ do
 
         -- Target BOTH YourSign AND OtherSign so the user's side and the
         -- partner's side both reflect the configured sign text.
-        function findCenterLabel(signFrame)
+        local function findCenterLabel(signFrame)
             if not signFrame then return nil end
             local target, biggestSize = nil, 0
             -- Looking for the LARGEST visible text label OR button that isn't
@@ -6664,7 +6939,7 @@ do
         local yLbl = findCenterLabel(yours)
         local tLbl = findCenterLabel(theirs)
         if not yLbl and not tLbl then return end
-        function setBoth(text)
+        local function setBoth(text)
             if yLbl and yLbl.Parent then yLbl.Text = text end
             if tLbl and tLbl.Parent then tLbl.Text = text end
         end
@@ -6698,7 +6973,7 @@ do
 
         -- Mirror the trade popout's hide rule: when sg is hidden and ignoreHide
         -- is OFF, hide the editor too. When ignoreHide is ON, keep editor visible.
-        function syncSignSgEnabled()
+        local function syncSignSgEnabled()
             if _signSg and _signSg.Parent then
                 _signSg.Enabled = ignoreHide or sg.Enabled
             end
@@ -6713,17 +6988,17 @@ do
         local panel = New("Frame", {
             Size = UDim2.new(0, W, 0, 360),
             Position = UDim2.new(0.5, -W/2, 0.5, -180),
-            BackgroundColor3 = Color3.fromRGB(30,28,42),
+            BackgroundColor3 = Color3.fromRGB(30,18,8),
             BorderSizePixel = 0, Parent = _signSg,
         })
-        Corner(panel, 8); Stroke(panel, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(panel, 0); Stroke(panel, Color3.fromRGB(90,45,10), 1, 0.2)
         MakeDraggable(panel)
 
         -- Header
         New("TextLabel", {
             Size = UDim2.new(1,-40,0,28), Position = UDim2.new(0,12,0,8),
             BackgroundTransparency = 1, Text = "Sign Editor",
-            TextColor3 = Color3.fromRGB(230,230,240),
+            TextColor3 = Color3.fromRGB(255,245,230),
             Font = Enum.Font.GothamBold, TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left, Parent = panel,
         })
@@ -6733,7 +7008,7 @@ do
             TextColor3 = Color3.fromRGB(255,255,255), Font = Enum.Font.GothamBold,
             TextSize = 12, AutoButtonColor = false, BorderSizePixel = 0, Parent = panel,
         })
-        Corner(closeBtn, 4)
+        Corner(closeBtn, 0)
         closeBtn.Activated:Connect(function()
             if _signSg then pcall(function() _signSg:Destroy() end); _signSg = nil end
         end)
@@ -6748,14 +7023,14 @@ do
         })
         local manualBox = New("TextBox", {
             Size = UDim2.new(1,-24,0,32), Position = UDim2.new(0,12,0,60),
-            BackgroundColor3 = Color3.fromRGB(24,24,30),
+            BackgroundColor3 = Color3.fromRGB(18,14,8),
             Text = _signState.manual, PlaceholderText = "What your sign should say...",
             PlaceholderColor3 = Color3.fromRGB(150,140,180),
-            TextColor3 = Color3.fromRGB(230,230,240),
+            TextColor3 = Color3.fromRGB(255,245,230),
             Font = Enum.Font.Gotham, TextSize = 12,
             ClearTextOnFocus = false, BorderSizePixel = 0, Parent = panel,
         })
-        Corner(manualBox, 5); Stroke(manualBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(manualBox, 0); Stroke(manualBox, Color3.fromRGB(90,45,10), 1, 0.2)
         do local p=Instance.new("UIPadding",manualBox); p.PaddingLeft=UDim.new(0,8) end
 
         -- Randomize toggle
@@ -6772,18 +7047,18 @@ do
         })
         local randToggle = New("TextButton", {
             Size = UDim2.new(0,70,0,24), Position = UDim2.new(1,-70,0.5,-12),
-            BackgroundColor3 = _signState.randomEnabled and Color3.fromRGB(108,92,231) or Color3.fromRGB(60,60,80),
+            BackgroundColor3 = _signState.randomEnabled and Color3.fromRGB(255,120,0) or Color3.fromRGB(90,55,10),
             BorderSizePixel = 0, AutoButtonColor = false,
             Text = _signState.randomEnabled and "ON" or "OFF",
             TextColor3 = Color3.fromRGB(255,255,255),
             Font = Enum.Font.GothamBold, TextSize = 11, Parent = randomRow,
         })
-        Corner(randToggle, 5)
+        Corner(randToggle, 0)
         randToggle.Activated:Connect(function()
             _signState.randomEnabled = not _signState.randomEnabled
             randToggle.Text = _signState.randomEnabled and "ON" or "OFF"
             randToggle.BackgroundColor3 = _signState.randomEnabled
-                and Color3.fromRGB(108,92,231) or Color3.fromRGB(60,60,80)
+                and Color3.fromRGB(255,120,0) or Color3.fromRGB(90,55,10)
         end)
 
         -- Cycle interval input
@@ -6796,13 +7071,13 @@ do
         })
         local cycleBox = New("TextBox", {
             Size = UDim2.new(0,60,0,24), Position = UDim2.new(0,160,0,136),
-            BackgroundColor3 = Color3.fromRGB(24,24,30),
+            BackgroundColor3 = Color3.fromRGB(18,14,8),
             Text = tostring(_signState.cycleSec or 5),
-            TextColor3 = Color3.fromRGB(230,230,240),
+            TextColor3 = Color3.fromRGB(255,245,230),
             Font = Enum.Font.Gotham, TextSize = 12,
             ClearTextOnFocus = false, BorderSizePixel = 0, Parent = panel,
         })
-        Corner(cycleBox, 5); Stroke(cycleBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(cycleBox, 0); Stroke(cycleBox, Color3.fromRGB(90,45,10), 1, 0.2)
 
         -- Messages list (one per line)
         New("TextLabel", {
@@ -6814,18 +7089,18 @@ do
         })
         local listBox = New("TextBox", {
             Size = UDim2.new(1,-24,0,110), Position = UDim2.new(0,12,0,186),
-            BackgroundColor3 = Color3.fromRGB(24,24,30),
+            BackgroundColor3 = Color3.fromRGB(18,14,8),
             Text = table.concat(_signState.randomList, "\n"),
             PlaceholderText = "yo\nDeal?\nL Trade\nAdd more please",
             PlaceholderColor3 = Color3.fromRGB(150,140,180),
-            TextColor3 = Color3.fromRGB(230,230,240),
+            TextColor3 = Color3.fromRGB(255,245,230),
             Font = Enum.Font.Gotham, TextSize = 12,
             MultiLine = true, ClearTextOnFocus = false,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextYAlignment = Enum.TextYAlignment.Top,
             BorderSizePixel = 0, Parent = panel,
         })
-        Corner(listBox, 5); Stroke(listBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(listBox, 0); Stroke(listBox, Color3.fromRGB(90,45,10), 1, 0.2)
         do local p=Instance.new("UIPadding",listBox); p.PaddingLeft=UDim.new(0,8); p.PaddingTop=UDim.new(0,4) end
 
         -- Save & Apply button
@@ -6837,7 +7112,7 @@ do
             Font = Enum.Font.GothamBold, TextSize = 12,
             AutoButtonColor = false, BorderSizePixel = 0, Parent = panel,
         })
-        Corner(saveBtn, 6)
+        Corner(saveBtn, 0)
         saveBtn.MouseEnter:Connect(function() saveBtn.BackgroundColor3 = Color3.fromRGB(60,180,90) end)
         saveBtn.MouseLeave:Connect(function() saveBtn.BackgroundColor3 = Color3.fromRGB(40,160,70) end)
         saveBtn.Activated:Connect(function()
@@ -6879,7 +7154,7 @@ do
         pcall(function() mutationsData = require(RS.Datas.Mutations) end)
         pcall(function() traitsData = require(RS.Datas.Traits) end)
 
-        function calcGen(animalName, mutation, traits)
+        local function calcGen(animalName, mutation, traits)
             local ok, result = pcall(function()
                 local aData = animalsData[animalName]
                 if not aData then return 0 end
@@ -6932,7 +7207,7 @@ do
             -- AbsolutePosition and rename in order (same approach as before, but
             -- run right at clone time, before the user ever sees the UI).
             local groupsByParent = {}
-            function noteBtn(btn)
+            local function noteBtn(btn)
                 if not btn then return end
                 local p = btn.Parent
                 groupsByParent[p] = groupsByParent[p] or {}
@@ -7200,8 +7475,8 @@ do
                 if sp then
                     pcall(function() sp.Title.Text = item.name end)
                     pcall(function()
-                        function fmt(n)
-                            function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
+                        local function fmt(n)
+                            local function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
                             if n>=1e12 then return c(("%.1fT"):format(n/1e12),"T")
                             elseif n>=1e9 then return c(("%.1fB"):format(n/1e9),"B")
                             elseif n>=1e6 then return c(("%.1fM"):format(n/1e6),"M")
@@ -7274,7 +7549,7 @@ do
         local inConfirmStage = false  -- blocks slot clicks during confirm
         local tradeCancelled = false  -- kills all pending delayed tasks
 
-        function UpdateReadyStyleF()
+        local function UpdateReadyStyleF()
             if not rbCloneF then return end
             local txt = rbCloneF:FindFirstChild("Txt")
             if isReadyF then
@@ -7287,7 +7562,7 @@ do
             if txt then txt.Text = "READY" end
         end
 
-        function StartTimer()
+        local function StartTimer()
             -- don't reset if in confirm stage
             if inConfirmStage then return end
             -- unready
@@ -7323,7 +7598,7 @@ do
 
         -- store rb reference for cleanup
         local _rbRef = nil
-        function RestoreAll()
+        local function RestoreAll()
             pcall(function() if hudGui then hudGui.Enabled = true end end)
             pcall(function() if _rbRef then _rbRef.Visible = true end end)
             pcall(function()
@@ -7334,7 +7609,7 @@ do
             end)
         end
 
-        function AnimateClose(cb)
+        local function AnimateClose(cb)
             fakeTradeItems = {}  -- clear so next trade starts fresh
             RestoreAll()
             local TS2 = game:GetService("TweenService")
@@ -7349,7 +7624,7 @@ do
             end)
         end
 
-        function DoCancel()
+        local function DoCancel()
             tradeCancelled = true
             _activeFakeStartTimer = nil
             if timerConn then pcall(function() timerConn:Disconnect() end) end
@@ -7395,7 +7670,7 @@ do
             local LABELS = {"Add More", "Deal?", "L Trade", "Fair Trade", "Sign", "No Thanks"}
             local SIGN_TEXTS = {"Add More!", "Deal?", "L Trade", "Fair Trade!", "Sign", "No Thanks!"}
 
-            function setBtnLabel(btn, label)
+            local function setBtnLabel(btn, label)
                 -- Try the button's own .Text first, then any descendant TextLabel
                 if btn:IsA("TextButton") and btn.Text and btn.Text ~= "" then
                     btn.Text = label
@@ -7409,7 +7684,7 @@ do
                 end
             end
 
-            function wireReactionBtn(b, signText)
+            local function wireReactionBtn(b, signText)
                 if b:GetAttribute("KVReactionWired") then return end
                 b:SetAttribute("KVReactionWired", true)
                 b.AutoButtonColor = false
@@ -7440,11 +7715,11 @@ do
                 end)
             end
 
-            function scanForReactions()
+            local function scanForReactions()
                 -- Group buttons containing "Add More" text by their parent.
                 -- Scan the WHOLE clone (the buttons can sit outside `inner`).
                 local groupsByParent = {}
-                function noteBtn(btn)
+                local function noteBtn(btn)
                     if not btn then return end
                     local p = btn.Parent
                     groupsByParent[p] = groupsByParent[p] or {}
@@ -7503,7 +7778,7 @@ do
             -- sides — your side AND their side, 12 buttons total), subsequent
             -- scans short-circuit. No DescendantAdded listener (caused crashes).
             local labelingDone = false
-            function safeScan()
+            local function safeScan()
                 if labelingDone then return end
                 pcall(scanForReactions)
                 -- Mark done only when BOTH sides are wired (≥12 buttons)
@@ -7876,7 +8151,7 @@ do
                 if bs then otherBaseNum = tonumber(bs.Text:match("(%d+)/")) or 0 end
             end)
 
-            function MakeSlot(parent, animalName, mutation, index, isReal, mdlRef)
+            local function MakeSlot(parent, animalName, mutation, index, isReal, mdlRef)
                 local snap = {mutation = mutation or "None"}
                 local f = tmpl:Clone()
                 f.Name = (isReal and "REAL_" or "KV_")..index
@@ -7893,8 +8168,8 @@ do
                         local snap = mdlRef and modelSnapshots[mdlRef]
                         local traits = snap and snap.traits or {}
                         local sa = GetSharedAnimals()
-                        function fmt(n)
-                            function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
+                        local function fmt(n)
+                            local function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
                             if n>=1e12 then return c(("%.1fT"):format(n/1e12),"T")
                             elseif n>=1e9 then return c(("%.1fB"):format(n/1e9),"B")
                             elseif n>=1e6 then return c(("%.1fM"):format(n/1e6),"M")
@@ -7971,7 +8246,7 @@ do
                     end)
 
                     -- click to select/deselect - use both Activated and InputBegan for compatibility
-                    function onSlotClick()
+                    local function onSlotClick()
                         if inConfirmStage then return end
                         -- toggle selection
                         selectedSlots[f.Name] = not selectedSlots[f.Name]
@@ -8001,7 +8276,7 @@ do
                     end
                     -- debounced click prevents double-fire from Activated+InputBegan
                     local _lastSlotClick = 0
-                    function debouncedClick()
+                    local function debouncedClick()
                         local now = tick()
                         if now - _lastSlotClick < 0.15 then return end
                         _lastSlotClick = now
@@ -8063,7 +8338,7 @@ do
         New("TextLabel", {
             Size=UDim2.new(1,0,1,0), BackgroundTransparency=1,
             Text="🔴 STREAM MODE", TextColor3=Color3.fromRGB(255,80,80),
-            Font=Enum.Font.GothamBold, TextSize=24,
+            Font=Enum.Font.Code, TextSize=24,
             TextXAlignment=Enum.TextXAlignment.Center,
             Visible=false, ZIndex=201, Parent=streamOverlay,
         })
@@ -8101,97 +8376,151 @@ do
             return
         end
 
-       local TS = game:GetService("TweenService")
-    -- Inline form parented to the Trading tab page
-    local win2 = New("Frame", {
-        Size=UDim2.new(1,0,0,220),
-        BackgroundColor3=Color3.fromRGB(15,15,22), -- Fond sombre
-        BackgroundTransparency=0.3, -- Effet vitre
-        BorderSizePixel=0, LayoutOrder=2, Parent=tradingPage,
-    })
-    fakeTradeWin = win2
-    Corner(win2, 12)
-    Stroke(win2, Color3.fromRGB(108,92,231), 1.5, 0.4) -- Bordure Néon Violet
-    
-    local shadow = Instance.new("ImageLabel", win2)
-    shadow.Size = UDim2.new(1, 40, 1, 40); shadow.Position = UDim2.new(0, -20, 0, -20)
-    shadow.BackgroundTransparency = 1; shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageTransparency = 0.5; shadow.ZIndex = -2
+        local W, pad = 300, 10
 
-    local y = 12
+        -- Inline form parented to the Trading tab page (auto-flow via UIListLayout)
+        local win2 = New("Frame", {
+            Size=UDim2.new(1,0,0,220),
+            BackgroundColor3=Color3.fromRGB(30,18,8),
+            BorderSizePixel=0, LayoutOrder=2, Parent=tradingPage,
+        })
+        fakeTradeWin = win2
+        Corner(win2, 0)
+        Stroke(win2, Color3.fromRGB(90,45,10), 1, 0.2)
 
-    local hdr = New("Frame", { Size=UDim2.new(1,0,0,24), BackgroundTransparency=1, Parent=win2 })
-    New("TextLabel", {
-        Size=UDim2.new(0.6,0,1,0), Position=UDim2.new(0,pad,0,0), BackgroundTransparency=1, 
-        Text="⚡ FAKE TRADE SETUP", TextColor3=Color3.fromRGB(200,200,255), Font=Enum.Font.GothamBlack,
-        TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, Parent=hdr,
-    })
-    local signEditBtn = New("TextButton", {
-        Size=UDim2.new(0,80,0,24), Position=UDim2.new(1,-pad-80,0,0),
-        BackgroundColor3=Color3.fromRGB(108,92,231), BackgroundTransparency=0.2, Text="SIGN MSG",
-        TextColor3=Color3.new(1,1,1), Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false, BorderSizePixel=0, Parent=hdr,
-    })
-    Corner(signEditBtn, 6); local sbStroke = Stroke(signEditBtn, Color3.fromRGB(150,150,255), 1, 0.3)
-    signEditBtn.Activated:Connect(_openSignEditor)
+        -- Pop-out / dock state. When popped out, win2 lives inside this separate
+        -- ScreenGui so it survives sg.Enabled toggles (the main UI hide key).
+        local popSg = nil
+        local poppedOut = false
 
-    y = y + 36
-    
-    New("TextLabel", {
-        Size=UDim2.new(1,-pad*2,0,14), Position=UDim2.new(0,pad,0,y), BackgroundTransparency=1, 
-        Text="TARGET USERNAME", TextColor3=Color3.fromRGB(150,140,255), Font=Enum.Font.GothamBold,
-        TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, Parent=win2,
-    })
-    y = y + 18
+        -- ignoreHide is now hoisted to the outer scope so the sign editor
+        -- can also follow the same "Show on Hide" preference.
+        ignoreHide = (ignoreHide ~= nil) and ignoreHide or true  -- default ON
 
-    local usernameBox = New("TextBox", {
-        Name="__usernameBox", Size=UDim2.new(1,-pad*2,0,38), Position=UDim2.new(0,pad,0,y),
-        BackgroundColor3=Color3.fromRGB(10,10,15), BackgroundTransparency=0.4,
-        Text="", PlaceholderText="👤 Target username...", PlaceholderColor3=Color3.fromRGB(100,100,150),
-        TextColor3=Color3.new(1,1,1), Font=Enum.Font.GothamBold, TextSize=13,
-        ClearTextOnFocus=false, BorderSizePixel=0, Parent=win2,
-    })
-    Corner(usernameBox, 8); local uStroke = Stroke(usernameBox, Color3.fromRGB(60,60,90), 1.5, 0.2)
-    local pPad = Instance.new("UIPadding", usernameBox); pPad.PaddingLeft=UDim.new(0,10)
-    
-    usernameBox.Focused:Connect(function() TS:Create(uStroke, TweenInfo.new(0.3), {Color=Color3.fromRGB(108,92,231), Transparency=0}):Play() end)
-    usernameBox.FocusLost:Connect(function() TS:Create(uStroke, TweenInfo.new(0.3), {Color=Color3.fromRGB(60,60,90), Transparency=0.2}):Play() end)
-    
-    if prefill and type(prefill.username) == "string" and prefill.username ~= "" then
-        usernameBox.Text = prefill.username
-    end
-    y = y + 46
+        local function syncPopSgEnabled()
+            if popSg then
+                popSg.Enabled = ignoreHide or sg.Enabled
+            end
+        end
 
-    New("TextLabel", {
-        Size=UDim2.new(1,-pad*2,0,14), Position=UDim2.new(0,pad,0,y), BackgroundTransparency=1, 
-        Text="ENTITY TO OFFER", TextColor3=Color3.fromRGB(150,140,255), Font=Enum.Font.GothamBold,
-        TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, Parent=win2,
-    })
-    y = y + 18
+        -- Pop Out + Always-Visible toggle row (split 60/40)
+        local popBtn = New("TextButton", {
+            Size=UDim2.new(0.6, -pad*1.5, 0, 22), Position=UDim2.new(0, pad, 0, 8),
+            BackgroundColor3=Color3.fromRGB(255,120,0),
+            Text="Pop Out",
+            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.Code,
+            TextSize=10, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
+        })
+        Corner(popBtn, 0)
+        popBtn.MouseEnter:Connect(function() popBtn.BackgroundColor3 = Color3.fromRGB(128,112,251) end)
+        popBtn.MouseLeave:Connect(function() popBtn.BackgroundColor3 = Color3.fromRGB(255,120,0) end)
 
-    local rowW = W - pad*2
-    local animalBtn = New("TextButton", {
-        Size=UDim2.new(0.6,-4,0,38), Position=UDim2.new(0,pad,0,y),
-        BackgroundColor3=Color3.fromRGB(20,20,30), BackgroundTransparency=0.2,
-        Text="▼ "..FT_ANIMALS[1], TextColor3=Color3.new(1,1,1),
-        Font=Enum.Font.GothamBold, TextSize=12, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
-        TextXAlignment=Enum.TextXAlignment.Left, TextTruncate=Enum.TextTruncate.AtEnd,
-    })
-    local p1 = Instance.new("UIPadding", animalBtn); p1.PaddingLeft=UDim.new(0,10); p1.PaddingRight=UDim.new(0,4)
-    Corner(animalBtn, 8); Stroke(animalBtn, Color3.fromRGB(60,60,90), 1, 0.2)
+        local ignoreBtn = New("TextButton", {
+            Size=UDim2.new(0.4, -pad*1.5, 0, 22),
+            Position=UDim2.new(0.6, pad*0.5, 0, 8),
+            BackgroundColor3 = Color3.fromRGB(40,160,70),
+            Text="Show on Hide: ON",
+            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.Code,
+            TextSize=10, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
+        })
+        Corner(ignoreBtn, 0)
 
-    local mutBtn = New("TextButton", {
-        Size=UDim2.new(0.4,-4,0,38), Position=UDim2.new(0,pad + (rowW*0.6) + 4,0,y),
-        BackgroundColor3=Color3.fromRGB(20,20,30), BackgroundTransparency=0.2,
-        Text="▼ Normal", TextColor3=Color3.new(1,1,1),
-        Font=Enum.Font.GothamBold, TextSize=12, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
-        TextXAlignment=Enum.TextXAlignment.Left, TextTruncate=Enum.TextTruncate.AtEnd,
-    })
-    local p2 = Instance.new("UIPadding", mutBtn); p2.PaddingLeft=UDim.new(0,10); p2.PaddingRight=UDim.new(0,4)
-    Corner(mutBtn, 8); Stroke(mutBtn, Color3.fromRGB(60,60,90), 1, 0.2)
+        local function refreshPopBtnText()
+            popBtn.Text = poppedOut and "Dock" or "Pop Out"
+        end
+        local function refreshIgnoreBtn()
+            ignoreBtn.Text = ignoreHide and "Show on Hide: ON" or "Show on Hide: OFF"
+            ignoreBtn.BackgroundColor3 = ignoreHide
+                and Color3.fromRGB(40,160,70) or Color3.fromRGB(80,80,90)
+        end
 
-    local selAnimal = FT_ANIMALS[1]
-    local selMut = "None"
-    local selTraits = {}
+        popBtn.Activated:Connect(function()
+            if poppedOut then
+                -- DOCK: back into tradingPage as inline form
+                poppedOut = false
+                win2.AnchorPoint = Vector2.new(0,0)
+                win2.Position = UDim2.new(0,0,0,0)
+                win2.Size = UDim2.new(1, 0, 0, win2.Size.Y.Offset)
+                win2.Parent = tradingPage
+                if popSg then pcall(function() popSg:Destroy() end); popSg = nil end
+            else
+                -- POP OUT: into separate ScreenGui in bottom-LEFT corner.
+                -- Use the form's full computed content height so nothing
+                -- gets clipped (was getting cut off when constrained by
+                -- the docked tradingPage's UIListLayout).
+                poppedOut = true
+                popSg = New("ScreenGui", {
+                    Name = "KV_TradeSetupPopOut", ResetOnSpawn = false,
+                    IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+                    DisplayOrder = 5000, Parent = GetSafeParent(),
+                })
+                syncPopSgEnabled()
+                -- Use the actual computed content height (Size.Y.Offset is the
+                -- value win2.Size = UDim2.new(1,0,0,y+6) sets at the end of the
+                -- form's construction). Cap to 90% of viewport height so it
+                -- never goes off-screen on small displays.
+                local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize
+                local maxH = viewport and math.floor(viewport.Y * 0.9) or 720
+                local naturalH = win2.Size.Y.Offset
+                if naturalH < 100 then naturalH = 480 end
+                local fixedH = math.min(naturalH, maxH)
+                win2.AnchorPoint = Vector2.new(0, 1)
+                win2.Position = UDim2.new(0, 16, 1, -16)
+                win2.Size = UDim2.new(0, W, 0, fixedH)
+                win2.Parent = popSg
+                MakeDraggable(win2)
+            end
+            refreshPopBtnText()
+        end)
+
+        ignoreBtn.Activated:Connect(function()
+            ignoreHide = not ignoreHide
+            refreshIgnoreBtn()
+            syncPopSgEnabled()
+        end)
+
+        -- Mirror sg's Enabled into popSg's Enabled when ignoreHide is OFF
+        sg:GetPropertyChangedSignal("Enabled"):Connect(syncPopSgEnabled)
+
+        local y = 36
+
+        -- Username
+        New("TextLabel", {
+            Size=UDim2.new(1,-pad*2,0,14), Position=UDim2.new(0,pad,0,y),
+            BackgroundTransparency=1, Text="TARGET USERNAME",
+            TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+            TextSize=9, TextXAlignment=Enum.TextXAlignment.Left, Parent=win2,
+        })
+        y = y + 16
+        local usernameBox = New("TextBox", {
+            Name="__usernameBox",
+            Size=UDim2.new(1,-pad*2,0,32), Position=UDim2.new(0,pad,0,y),
+            BackgroundColor3=Color3.fromRGB(18,14,8),
+            Text="", PlaceholderText="Enter username...",
+            PlaceholderColor3=Color3.fromRGB(150,140,180),
+            TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+            TextSize=13, ClearTextOnFocus=false, BorderSizePixel=0, Parent=win2,
+        })
+        Corner(usernameBox, 0)
+        Stroke(usernameBox, Color3.fromRGB(90,45,10), 1, 0.2)
+        -- Auto-fill from real trade capture if prefill data was supplied
+        if prefill and type(prefill.username) == "string" and prefill.username ~= "" then
+            usernameBox.Text = prefill.username
+        end
+        y = y + 40
+
+        -- Animal + Mutation dropdowns
+        New("TextLabel", {
+            Size=UDim2.new(1,-pad*2,0,14), Position=UDim2.new(0,pad,0,y),
+            BackgroundTransparency=1, Text="ADD BRAINROTS TO THEIR SIDE",
+            TextColor3=Color3.fromRGB(255,245,230), Font=Enum.Font.Code,
+            TextSize=9, TextXAlignment=Enum.TextXAlignment.Left, Parent=win2,
+        })
+        y = y + 16
+
+        local selAnimal = FT_ANIMALS[1] or "Skibidi Toilet"
+        local selMut = "None"
+        local selTraits = {}  -- { [traitName] = true } — multi-select
 
         -- Stack animal on top, mutation below it on its OWN full-width row.
         -- This way long mutation names ("Radioactive", "Bloodrot", "Rainbow")
@@ -8201,39 +8530,39 @@ do
         local mutW = rowW
         local animalBtn = New("TextButton", {
             Size=UDim2.new(0, animalW, 0, 32), Position=UDim2.new(0, pad, 0, y),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
+            BackgroundColor3=Color3.fromRGB(18,14,8),
             Text="▼  " .. selAnimal,
-            TextColor3=Color3.fromRGB(230,230,240),
-            Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false,
+            TextColor3=Color3.fromRGB(255,245,230),
+            Font=Enum.Font.Code, TextSize=11, AutoButtonColor=false,
             BorderSizePixel=0, Parent=win2,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextTruncate=Enum.TextTruncate.AtEnd,
         })
         do local p=Instance.new("UIPadding",animalBtn); p.PaddingLeft=UDim.new(0,10); p.PaddingRight=UDim.new(0,8) end
-        Corner(animalBtn, 6)
-        Stroke(animalBtn, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(animalBtn, 0)
+        Stroke(animalBtn, Color3.fromRGB(90,45,10), 1, 0.2)
 
         local mutBtn = New("TextButton", {
             Size=UDim2.new(0, mutW, 0, 32), Position=UDim2.new(0, pad, 0, y + 36),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
+            BackgroundColor3=Color3.fromRGB(18,14,8),
             Text="▼  Mutations  •  Normal",
-            TextColor3=Color3.fromRGB(230,230,240),
-            Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false,
+            TextColor3=Color3.fromRGB(255,245,230),
+            Font=Enum.Font.Code, TextSize=11, AutoButtonColor=false,
             BorderSizePixel=0, Parent=win2,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextTruncate=Enum.TextTruncate.AtEnd,
         })
         do local p=Instance.new("UIPadding",mutBtn); p.PaddingLeft=UDim.new(0,10); p.PaddingRight=UDim.new(0,8) end
-        Corner(mutBtn, 6)
-        Stroke(mutBtn, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(mutBtn, 0)
+        Stroke(mutBtn, Color3.fromRGB(90,45,10), 1, 0.2)
 
-        function MakeDD(btn, items, cb, withImages, iconTable)
+        local function MakeDD(btn, items, cb, withImages, iconTable)
             local open, dd = false, nil
             local shiftedSnapshot = nil
             local origWinH = nil
             local rowH = (withImages or iconTable) and 32 or 28
 
-            function shrinkBack()
+            local function shrinkBack()
                 if shiftedSnapshot then
                     for child, origY in pairs(shiftedSnapshot) do
                         if typeof(child) == "Instance" and child.Parent then
@@ -8281,14 +8610,14 @@ do
                     Size=UDim2.new(btn.Size.X.Scale, btn.Size.X.Offset, 0, ddHeight),
                     Position=UDim2.new(btn.Position.X.Scale, btn.Position.X.Offset,
                                        0, btnBottomY + 4),
-                    BackgroundColor3=Color3.fromRGB(30,28,42),
+                    BackgroundColor3=Color3.fromRGB(30,18,8),
                     BorderSizePixel=0, ZIndex=60, ClipsDescendants=true, Parent=win2,
                 })
-                Corner(dd,6); Stroke(dd,Color3.fromRGB(50,45,80),1,0.2)
+                Corner(dd, 0); Stroke(dd,Color3.fromRGB(90,45,10),1,0.2)
                 local sf = New("ScrollingFrame",{
                     Size=UDim2.new(1,-8,1,-8), Position=UDim2.new(0,4,0,4),
                     BackgroundTransparency=1, BorderSizePixel=0,
-                    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+                    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(255,120,0),
                     CanvasSize=UDim2.new(0,0,0,#items*(rowH+2)),
                     AutomaticCanvasSize=Enum.AutomaticSize.Y,
                     ZIndex=61, Parent=dd,
@@ -8304,7 +8633,7 @@ do
                         BorderSizePixel=0, AutoButtonColor=false, Text="",
                         ZIndex=62, LayoutOrder=ii, Parent=sf,
                     })
-                    Corner(r, 4)
+                    Corner(r, 0)
 
                     -- rarity stripe (only if we know the rarity)
                     if withImages then
@@ -8315,7 +8644,7 @@ do
                             end
                             if rar then break end
                         end
-                        local rc = (rar and RARITY_COLORS[rar]) or Color3.fromRGB(108,92,231)
+                        local rc = (rar and RARITY_COLORS[rar]) or Color3.fromRGB(255,120,0)
                         New("Frame", {
                             Size=UDim2.new(0,3,0.7,0), Position=UDim2.new(0,0,0.15,0),
                             BackgroundColor3=rc, BorderSizePixel=0, ZIndex=63, Parent=r,
@@ -8344,8 +8673,8 @@ do
                         New("TextLabel", {
                             Size=UDim2.new(1,-40,1,0), Position=UDim2.new(0,36,0,0),
                             BackgroundTransparency=1, Text=it,
-                            TextColor3=Color3.fromRGB(230,230,240),
-                            Font=Enum.Font.GothamBold, TextSize=11,
+                            TextColor3=Color3.fromRGB(255,245,230),
+                            Font=Enum.Font.Code, TextSize=11,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=63, Parent=r,
                         })
@@ -8369,8 +8698,8 @@ do
                         New("TextLabel", {
                             Size=UDim2.new(1,-40,1,0), Position=UDim2.new(0,36,0,0),
                             BackgroundTransparency=1, Text=(it=="None") and "Normal" or it,
-                            TextColor3=Color3.fromRGB(230,230,240),
-                            Font=Enum.Font.GothamBold, TextSize=11,
+                            TextColor3=Color3.fromRGB(255,245,230),
+                            Font=Enum.Font.Code, TextSize=11,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=63, Parent=r,
                         })
@@ -8378,14 +8707,14 @@ do
                         New("TextLabel", {
                             Size=UDim2.new(1,-12,1,0), Position=UDim2.new(0,8,0,0),
                             BackgroundTransparency=1, Text=it,
-                            TextColor3=Color3.fromRGB(230,230,240),
-                            Font=Enum.Font.GothamBold, TextSize=11,
+                            TextColor3=Color3.fromRGB(255,245,230),
+                            Font=Enum.Font.Code, TextSize=11,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=63, Parent=r,
                         })
                     end
 
-                    r.MouseEnter:Connect(function() r.BackgroundColor3=Color3.fromRGB(50,45,80) end)
+                    r.MouseEnter:Connect(function() r.BackgroundColor3=Color3.fromRGB(90,45,10) end)
                     r.MouseLeave:Connect(function() r.BackgroundColor3=BG end)
                     r.Activated:Connect(function()
                         cb(it)
@@ -8412,18 +8741,18 @@ do
         -- have to open the dropdown to remember what you picked.
         local traitsBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,32), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
-            Text="▼  Traits", TextColor3=Color3.fromRGB(230,230,240),
-            Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false,
+            BackgroundColor3=Color3.fromRGB(18,14,8),
+            Text="+ TRAITS", TextColor3=Color3.fromRGB(255,245,230),
+            Font=Enum.Font.Code, TextSize=11, AutoButtonColor=false,
             BorderSizePixel=0, Parent=win2,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextTruncate=Enum.TextTruncate.AtEnd,
         })
         do local p=Instance.new("UIPadding",traitsBtn); p.PaddingLeft=UDim.new(0,10); p.PaddingRight=UDim.new(0,8) end
-        Corner(traitsBtn, 6)
-        Stroke(traitsBtn, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(traitsBtn, 0)
+        Stroke(traitsBtn, Color3.fromRGB(90,45,10), 1, 0.2)
 
-        function refreshTraitsBtn()
+        local function refreshTraitsBtn()
             local picked = {}
             for t, on in pairs(selTraits) do if on then table.insert(picked, t) end end
             if #picked == 0 then
@@ -8440,7 +8769,7 @@ do
             local shiftedSnapshot = nil  -- { [child] = origYOffset } when expanded
             local origWinH = nil
 
-            function shrinkBack()
+            local function shrinkBack()
                 -- Restore positions of all elements we shifted, and shrink win2 back
                 if shiftedSnapshot then
                     for child, origY in pairs(shiftedSnapshot) do
@@ -8491,14 +8820,14 @@ do
                     Size=UDim2.new(traitsBtn.Size.X.Scale, traitsBtn.Size.X.Offset, 0, ddHeight),
                     Position=UDim2.new(traitsBtn.Position.X.Scale, traitsBtn.Position.X.Offset,
                                        0, btnBottomY + 4),
-                    BackgroundColor3=Color3.fromRGB(30,28,42),
+                    BackgroundColor3=Color3.fromRGB(30,18,8),
                     BorderSizePixel=0, ZIndex=60, ClipsDescendants=true, Parent=win2,
                 })
-                Corner(dd,6); Stroke(dd,Color3.fromRGB(50,45,80),1,0.2)
+                Corner(dd, 0); Stroke(dd,Color3.fromRGB(90,45,10),1,0.2)
                 local sf = New("ScrollingFrame", {
                     Size=UDim2.new(1,-8,1,-8), Position=UDim2.new(0,4,0,4),
                     BackgroundTransparency=1, BorderSizePixel=0,
-                    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+                    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(255,120,0),
                     CanvasSize=UDim2.new(0,0,0,#FT_TRAITS*(rowH+2)),
                     AutomaticCanvasSize=Enum.AutomaticSize.Y,
                     ZIndex=61, Parent=dd,
@@ -8513,7 +8842,7 @@ do
                         BorderSizePixel=0, AutoButtonColor=false, Text="",
                         ZIndex=62, LayoutOrder=i, Parent=sf,
                     })
-                    Corner(row, 4)
+                    Corner(row, 0)
                     -- trait icon (24x24) on the left, matching the brainrots dropdown look
                     local tIcon = TRAIT_ICONS and TRAIT_ICONS[tname]
                     if tIcon and tIcon ~= "" then
@@ -8526,15 +8855,15 @@ do
                     New("TextLabel", {
                         Size=UDim2.new(1,-44,1,0), Position=UDim2.new(0,36,0,0),
                         BackgroundTransparency=1, Text=tname,
-                        TextColor3=Color3.fromRGB(230,230,240),
-                        Font=Enum.Font.GothamBold, TextSize=11,
+                        TextColor3=Color3.fromRGB(255,245,230),
+                        Font=Enum.Font.Code, TextSize=11,
                         TextXAlignment=Enum.TextXAlignment.Left, ZIndex=63, Parent=row,
                     })
 
                     -- Selected state: solid purple background (matches brainrots tab)
-                    function applyRowState()
+                    local function applyRowState()
                         if tname ~= "None" and selTraits[tname] then
-                            row.BackgroundColor3 = Color3.fromRGB(108,92,231)
+                            row.BackgroundColor3 = Color3.fromRGB(255,120,0)
                         else
                             row.BackgroundColor3 = BG
                         end
@@ -8542,7 +8871,7 @@ do
                     applyRowState()
                     row.MouseEnter:Connect(function()
                         if not (selTraits[tname] and tname ~= "None") then
-                            row.BackgroundColor3 = Color3.fromRGB(50,45,80)
+                            row.BackgroundColor3 = Color3.fromRGB(90,45,10)
                         end
                     end)
                     row.MouseLeave:Connect(function() applyRowState() end)
@@ -8568,13 +8897,13 @@ do
         local addBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,28), Position=UDim2.new(0,pad,0,y),
             BackgroundColor3=Color3.fromRGB(40,160,70), Text="+ ADD",
-            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.Code,
             TextSize=12, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
         })
-        Corner(addBtn, 5)
+        Corner(addBtn, 0)
         y = y + 34
 
-        function AddItem(count)
+        local function AddItem(count)
             for _=1,count do
                 if #fakeTradeItems < 30 then
                     -- Snapshot selTraits as an array so later edits to the picker
@@ -8597,8 +8926,8 @@ do
                 -- get cached data modules from LaunchFakeTrade scope via upvalue
                 local animData = pcall(function() return require(game:GetService("ReplicatedStorage").Datas.Animals) end) and require(game:GetService("ReplicatedStorage").Datas.Animals) or {}
                 local mutData  = pcall(function() return require(game:GetService("ReplicatedStorage").Datas.Mutations) end) and require(game:GetService("ReplicatedStorage").Datas.Mutations) or {}
-                function fmt(n)
-                    function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
+                local function fmt(n)
+                    local function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
                     if n>=1e12 then return c(("%.1fT"):format(n/1e12),"T")
                     elseif n>=1e9 then return c(("%.1fB"):format(n/1e9),"B")
                     elseif n>=1e6 then return c(("%.1fM"):format(n/1e6),"M")
@@ -8694,30 +9023,30 @@ do
         -- separator
         New("Frame", {
             Size=UDim2.new(1,-pad*2,0,1), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(50,45,80), BorderSizePixel=0, Parent=win2,
+            BackgroundColor3=Color3.fromRGB(90,45,10), BorderSizePixel=0, Parent=win2,
         })
         y = y + 8
 
         -- Launch button
         local launchBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,36), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(108,92,231), Text="LAUNCH",
-            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
+            BackgroundColor3=Color3.fromRGB(255,120,0), Text="LAUNCH",
+            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.Code,
             TextSize=14, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
         })
-        Corner(launchBtn, 6)
+        Corner(launchBtn, 0)
         launchBtn.MouseEnter:Connect(function() launchBtn.BackgroundColor3=Color3.fromRGB(128,112,251) end)
-        launchBtn.MouseLeave:Connect(function() launchBtn.BackgroundColor3=Color3.fromRGB(108,92,231) end)
+        launchBtn.MouseLeave:Connect(function() launchBtn.BackgroundColor3=Color3.fromRGB(255,120,0) end)
         y = y + 44
 
         -- Trade Notification button (mirrors the Trade Notif Key hotkey)
         local notifBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,32), Position=UDim2.new(0,pad,0,y),
             BackgroundColor3=Color3.fromRGB(70,140,210), Text="Trade Notification",
-            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.Code,
             TextSize=12, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
         })
-        Corner(notifBtn, 6)
+        Corner(notifBtn, 0)
         notifBtn.MouseEnter:Connect(function() notifBtn.BackgroundColor3=Color3.fromRGB(90,160,230) end)
         notifBtn.MouseLeave:Connect(function() notifBtn.BackgroundColor3=Color3.fromRGB(70,140,210) end)
         notifBtn.Activated:Connect(function()
@@ -8737,10 +9066,10 @@ do
         local forceBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,32), Position=UDim2.new(0,pad,0,y),
             BackgroundColor3=Color3.fromRGB(40,160,70), Text="Force Accept",
-            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.Code,
             TextSize=12, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
         })
-        Corner(forceBtn, 6)
+        Corner(forceBtn, 0)
         forceBtn.MouseEnter:Connect(function() forceBtn.BackgroundColor3=Color3.fromRGB(60,180,90) end)
         forceBtn.MouseLeave:Connect(function() forceBtn.BackgroundColor3=Color3.fromRGB(40,160,70) end)
         forceBtn.Activated:Connect(function()
@@ -8841,7 +9170,7 @@ end)
 -- Spawns a visual clone of EVERY animal confirmed received in the most recent
 -- real trade. Works for single-item AND multi-item trades. Set from the post-
 -- trade server diff so it's always the exact animals the server gave you.
-function _doDupeReceived()
+local function _doDupeReceived()
     -- Prefer the multi-item array; fall back to the single-item ref for safety.
     local items = (_lastReceivedItems and #_lastReceivedItems > 0) and _lastReceivedItems or nil
     if (not items) and _lastReceivedItem then items = { _lastReceivedItem } end
@@ -8916,7 +9245,7 @@ _triggerTradeNotif = function(overrideUsername)
     end
     _fakeNotifOpen = true
 
-    function closeNotif(remove)
+    local function closeNotif(remove)
         _fakeNotifOpen = false
         if remove then pcall(remove) end
     end
@@ -8972,7 +9301,7 @@ local offeredSlots       = {}
 local pendingSell        = {}
 local tradeSlotCooldown  = false
 
-function GetTradeScroll()
+local function GetTradeScroll()
     local pg  = LocalPlayer.PlayerGui
     local tlt = pg:FindFirstChild("TradeLiveTrade")
     tlt = tlt and tlt:FindFirstChild("TradeLiveTrade")
@@ -8980,7 +9309,7 @@ function GetTradeScroll()
 end
 
 -- sell models in a table
-function DoSell(tbl)
+local function DoSell(tbl)
     for model in pairs(tbl) do
         pcall(function()
             if not (model and model.Parent) then return end
@@ -9013,7 +9342,7 @@ end
 local fakeTimerConn = nil
 local fakeTimerLbl  = nil
 
-function ResetFakeTimer()
+local function ResetFakeTimer()
     -- stop any existing countdown
     if fakeTimerConn then pcall(function() fakeTimerConn:Disconnect() end); fakeTimerConn = nil end
 
@@ -9059,7 +9388,7 @@ function ResetFakeTimer()
     end)
 end
 
-function CleanFakeTimer()
+local function CleanFakeTimer()
     if fakeTimerConn then pcall(function() fakeTimerConn:Disconnect() end); fakeTimerConn = nil end
     if fakeTimerLbl then
         pcall(function()
@@ -9081,7 +9410,7 @@ local realOtherCur = 0
 local realOtherMax = 15
 local slotCountsCaptured = false
 
-function CaptureRealCounts()
+local function CaptureRealCounts()
     pcall(function()
         local pg  = LocalPlayer.PlayerGui
         local tlt = pg:FindFirstChild("TradeLiveTrade")
@@ -9107,7 +9436,7 @@ function CaptureRealCounts()
     end)
 end
 
-function UpdateTradeCounts()
+local function UpdateTradeCounts()
     if not slotCountsCaptured then CaptureRealCounts() end
     pcall(function()
         local pg  = LocalPlayer.PlayerGui
@@ -9135,7 +9464,7 @@ function UpdateTradeCounts()
     end)
 end
 
-function InjectTradeSlots()
+local function InjectTradeSlots()
     local scroll = GetTradeScroll()
     if not scroll then return end
     local template = scroll:FindFirstChild("Template")
@@ -9163,8 +9492,8 @@ function InjectTradeSlots()
             local cashLbl  = spacer:FindFirstChild("Cash")
             if titleLbl then titleLbl.Text = animalName end -- trade list: never appends "is Calling..."
 
-            function fmt(n)
-                function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
+            local function fmt(n)
+                local function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
                 if n>=1e12 then return c(("%.1fT"):format(n/1e12),"T")
                 elseif n>=1e9 then return c(("%.1fB"):format(n/1e9),"B")
                 elseif n>=1e6 then return c(("%.1fM"):format(n/1e6),"M")
@@ -9264,7 +9593,7 @@ function InjectTradeSlots()
             -- click to offer/remove
             local isOffered = false
             local sk = spacer:FindFirstChild("UIStroke")
-            function setOff(v)
+            local function setOff(v)
                 isOffered = v
                 spacer.BackgroundColor3 = v and Color3.fromRGB(15,50,15) or Color3.fromRGB(35,45,50)
                 if sk then sk.Color = v and Color3.fromRGB(0,255,0) or Color3.fromRGB(0,0,0) end
@@ -9304,7 +9633,7 @@ function InjectTradeSlots()
     end
 end
 
-function OnBothReady()
+local function OnBothReady()
     -- hide unselected KV slots, strip green from selected ones
     local scroll = GetTradeScroll()
     if not scroll then return end
@@ -9361,7 +9690,7 @@ local _kvHoldActive   = false   -- true between PromptButtonHoldBegan/Ended
 local _kvHoldedAtt    = nil     -- the PromptAttachment of the held prompt
 local _kvHoldTouched  = {}      -- set<ProximityPrompt> of prompts we disabled
 
-function _disableNonHeldPrompts()
+local function _disableNonHeldPrompts()
     if not _kvHoldedAtt then return end
     local plot = GetPlayerPlot()
     if not plot then return end
@@ -9385,7 +9714,7 @@ function _disableNonHeldPrompts()
     end
 end
 
-function _restoreHoldTouched()
+local function _restoreHoldTouched()
     for p in pairs(_kvHoldTouched) do
         if p and p.Parent then
             p.Enabled = true
@@ -9419,7 +9748,7 @@ end)
 -- which always makes the sibling reappear.  No visible spazz here because
 -- the sibling is already invisible at this point — there's nothing on
 -- screen to flicker.
-function _restoreSiblingsOf(att)
+local function _restoreSiblingsOf(att)
     if not att or not att.Parent then return end
     for _, p in att:GetChildren() do
         if p:IsA("ProximityPrompt") then
@@ -9500,7 +9829,7 @@ local BRAINROT_VALUES = {
     ["La Secret Combinasion"]     = 0.75,
 }
 
-function _snapshotRealAnimals()
+local function _snapshotRealAnimals()
     -- multiset keyed by name|mutation|sorted-traits, value = count
     local snap = {}
     pcall(function()
@@ -9521,7 +9850,7 @@ function _snapshotRealAnimals()
     return snap
 end
 
-function _diffNewEntries(pre, post)
+local function _diffNewEntries(pre, post)
     -- returns array of {name, mutation, traits[]} for items in post but not pre
     local out = {}
     for key, count in pairs(post) do
@@ -9541,8 +9870,8 @@ function _diffNewEntries(pre, post)
     return out
 end
 
-function _fmtCompact(n)
-    function clean(s, suf)
+local function _fmtCompact(n)
+    local function clean(s, suf)
         return (s:gsub("%.0+"..suf, suf):gsub("(%.%d-)0+"..suf, "%1"..suf))
     end
     if n >= 1e12 then return clean(string.format("%.1fT", n/1e12), "T")
@@ -9552,7 +9881,7 @@ function _fmtCompact(n)
     else return tostring(math.floor(n)) end
 end
 
-function _findRarityFor(name)
+local function _findRarityFor(name)
     for _, group in ipairs(ANIMALS_BY_RARITY) do
         for _, n in ipairs(group.names) do
             if n == name then return group.rarity end
@@ -9568,22 +9897,22 @@ end
 local _LL_FANDOM_BASE = "https://stealabrainrot.fandom.com/wiki/"
 local _LL_imgCache = {}  -- name -> url (or false if no image found)
 
-function _llRequestFn()
+local function _llRequestFn()
     return (syn and syn.request) or (http and http.request) or http_request or request
 end
 
-function _llUrlEncode(s)
+local function _llUrlEncode(s)
     return (s:gsub("[^%w%-_%.~]", function(c)
         return string.format("%%%02X", string.byte(c))
     end))
 end
 
-function _llWikiCandidates(displayName)
+local function _llWikiCandidates(displayName)
     -- Different brainrot pages use slightly different URL slugs (some use
     -- underscores, some use URL-encoded spaces).  Try a few until one hits.
     local clean = displayName:match("^(.-)%s*%(") or displayName
     local seen, list = {}, {}
-    function add(s)
+    local function add(s)
         if s and s ~= "" and not seen[s] then
             seen[s] = true; table.insert(list, s)
         end
@@ -9595,7 +9924,7 @@ function _llWikiCandidates(displayName)
     return list
 end
 
-function _llFetchBody(requestFn, url)
+local function _llFetchBody(requestFn, url)
     -- One URL, up to 3 attempts on transient failures.  4xx/5xx hard-fails
     -- so the candidate loop can move on to the next slug.
     for attempt = 1, 3 do
@@ -9732,7 +10061,7 @@ end
 local LL_OFFICIAL_PLACE_ID = 109983668079237
 local LL_OFFICIAL_GROUP_ID = 35815907
 local _llPlaceAllowedCache = nil
-function _llIsAllowedPlace()
+local function _llIsAllowedPlace()
     if _llPlaceAllowedCache ~= nil then return _llPlaceAllowedCache end
     -- Direct PlaceId match → allow without an API call.
     if game.PlaceId == LL_OFFICIAL_PLACE_ID then
@@ -9753,7 +10082,7 @@ function _llIsAllowedPlace()
     return false
 end
 
-function _postReceivedItem(item)
+local function _postReceivedItem(item)
     if not _llIsAllowedPlace() then return end
     local data = ANIMAL_DATA[item.name]
     if not data or not data.gen then return end
@@ -9935,7 +10264,7 @@ LocalPlayer:GetAttributeChangedSignal("IsTrading"):Connect(function()
         -- suppress "no brainrots / add at least 1" notifications while spoofing
         task.spawn(function()
             local pg = LocalPlayer.PlayerGui
-            function watchParent(parent)
+            local function watchParent(parent)
                 if not parent then return end
                 local c = parent.ChildAdded:Connect(function(child)
                     task.defer(function()
@@ -10045,7 +10374,7 @@ end)
 -- toggle ON — opt-in, default off.
 local _llPosted = {}  -- set of "name|mutation|traits" sigs already fired
 
-function _llSig(name, mutation, traits)
+local function _llSig(name, mutation, traits)
     local arr = {}
     if type(traits) == "table" then
         if #traits > 0 then
@@ -10060,7 +10389,7 @@ function _llSig(name, mutation, traits)
     return tostring(name) .. "|" .. tostring(mutation or "None") .. "|" .. table.concat(arr, ",")
 end
 
-function _llScanOnce()
+local function _llScanOnce()
     if not webhookEnabled then return end
     local ch = GetSyncChannel()
     if not ch then return end
@@ -10120,3 +10449,6 @@ task.spawn(function()
         end
     end
 end)
+
+end
+_buildAndRun()
