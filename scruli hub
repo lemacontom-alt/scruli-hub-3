@@ -6910,7 +6910,7 @@ do
             -- placeholder is the actual sign center; reactions are smaller.
             -- FIX: filter reaction buttons by their OBJECT NAME, not their text
             -- content — filtering by text was skipping the center label itself
-            -- when it still displayed its default placeholder ("sign", "last offer"…)
+            -- when it still displayed its default placeholder ("sign", "sign"…)
             local SKIP_NAMES = {
                 username=true, playerimage=true, headshot=true,
             }
@@ -7293,6 +7293,20 @@ local SIGN_TEXTS = {"➕ Add More!", "🤝 Deal?", "❌ L Trade", "✅ Fair Trad
 end
 
         local inner = clone:FindFirstChild("TradeLiveTrade")
+
+-- Remplace absolument TOUS les "Last Offer" (textes et zones d'écriture) par "Sign"
+for _, d in ipairs(clone:GetDescendants()) do
+    if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+        -- Modifie le texte normal
+        if d.Text and d.Text:lower():find("last offer") then
+            d.Text = "Sign"
+        end
+        -- Modifie le texte transparent (quand la zone est vide)
+        if d:IsA("TextBox") and d.PlaceholderText and d.PlaceholderText:lower():find("last offer") then
+            d.PlaceholderText = "Sign"
+        end
+    end
+end
         if not inner then clone:Destroy(); SetStatus("Inner frame missing!", Color3.fromRGB(255,80,80), 3); return end
         inner.Visible = true
         inner.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -7410,19 +7424,25 @@ end
             -- Other side username
             pcall(function() inner.Other.Username.Text = "@"..username.."'s Offer" end)
 
-            -- Other headshot via userId lookup
-            local ok, userId = pcall(function()
-                return game:GetService("Players"):GetUserIdFromNameAsync(username)
-            end)
-            if ok and userId then
-                pcall(function()
-                    inner.Other.PlayerImage.Headshot.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=100&h=100"):format(userId)
-                end)
-                pcall(function()
-                    inner.OtherSign.PlayerImage.Headshot.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=100&h=100"):format(userId)
-                    inner.OtherSign.Username.Text = "@"..username
-                end)
+-- Other headshot via userId lookup
+    local ok, userId = pcall(function() return game:GetService("Players"):GetUserIdFromNameAsync(username) end)
+    if ok and userId then
+        pcall(function()
+            inner.Other.PlayerImage.Headshot.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=100&h=100"):format(userId)
+        end)
+        pcall(function()
+            inner.OtherSign.PlayerImage.Headshot.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=100&h=100"):format(userId)
+            inner.OtherSign.Username.Text = "@"..username
+            
+            -- Modifie la taille du texte de l'autre joueur
+            for _, d in ipairs(inner.OtherSign:GetDescendants()) do
+                if d:IsA("TextLabel") and d.Name:lower() ~= "username" then
+                    d.TextScaled = false
+                    d.TextSize = 50 -- << C'EST ICI : Change 40 par la taille que tu veux !
+                end
             end
+        end)
+    end
 
             -- Slot counts - use actual rebirth data
             local realAnimalCountInit = 0
