@@ -6908,22 +6908,26 @@ do
             -- Looking for the LARGEST visible text label OR button that isn't
             -- the Username header / a reaction button. The big "Last Offer"-
             -- placeholder is the actual sign center; reactions are smaller.
+            -- FIX: filter reaction buttons by their OBJECT NAME, not their text
+            -- content — filtering by text was skipping the center label itself
+            -- when it still displayed its default placeholder ("sign", "last offer"…)
             local SKIP_NAMES = {
                 username=true, playerimage=true, headshot=true,
             }
-            local REACTION_TEXTS = {
-                ["add more"]=true, ["deal?"]=true, ["l trade"]=true,
-                ["fair trade"]=true, ["last offer"]=true, ["no thanks"]=true,
+            local REACTION_NAMES = {
+                ["addmore"]=true, ["deal"]=true, ["ltrade"]=true,
+                ["fairtrade"]=true, ["nothanks"]=true, ["lastoffer"]=true,
+                ["reactionbutton"]=true, ["reaction"]=true,
                 ["sign"]=true,
             }
             for _, d in ipairs(signFrame:GetDescendants()) do
                 if d:IsA("TextLabel") or d:IsA("TextButton") then
                     local nm = (d.Name or ""):lower()
-                    local txt = ((d.Text or ""):lower()):gsub("^%s+", ""):gsub("%s+$", "")
+                    local nmClean = nm:gsub("%s+",""):gsub("[^%a%d]","")
                     if not SKIP_NAMES[nm]
                        and not nm:find("playerimage")
                        and not nm:find("headshot")
-                       and not REACTION_TEXTS[txt] then
+                       and not REACTION_NAMES[nmClean] then
                         if (d.TextSize or 0) > biggestSize then
                             biggestSize = d.TextSize
                             target = d
@@ -7194,112 +7198,99 @@ do
         clone.Enabled = true
         clone.Parent = pg
 
-        -- ── Inject reaction button labels right at clone time ──
-        -- Walk every descendant and rename the placeholder text directly. No
-        -- watchdog, no race conditions — by the time the user sees the trade,
-        -- everything is already labeled.
-        do
-            -- Map of TARGET_LABEL → list of texts to recognize
-            local LABELS = {"Add More", "Deal?", "L Trade", "Fair Trade", "Sign", "No Thanks"}
-            local SIGN_TEXTS = {"Add More!", "Deal?", "L Trade", "Fair Trade!", "Sign", "No Thanks!"}
+        
 
-            -- Group all "Add More"-text buttons by their parent so we can sort by
-            -- AbsolutePosition and rename in order (same approach as before, but
-            -- run right at clone time, before the user ever sees the UI).
-            local groupsByParent = {}
-            local function noteBtn(btn)
-                if not btn then return end
-                local p = btn.Parent
-                groupsByParent[p] = groupsByParent[p] or {}
-                for _, x in ipairs(groupsByParent[p]) do if x == btn then return end end
-                table.insert(groupsByParent[p], btn)
+-- ── Inject reaction button labels right at clone time ──
+do
+local LABELS = {"➕ Add More", "🤝 Deal?", "❌ L Trade", "✅ Fair Trade", "📜 Last Offer", "🙅 No Thanks"}
+local SIGN_TEXTS = {"➕ Add More!", "🤝 Deal?", "❌ L Trade", "✅ Fair Trade!", "📜 Last Offer!", "🙅 No Thanks!"}
+    
+    local allBtns = {}
+    local function noteBtn(btn)
+        if not btn then return end
+        for _, x in ipairs(allBtns) do
+            if x == btn then return end
+        end
+        table.insert(allBtns, btn)
+    end
+
+    for _, d in ipairs(clone:GetDescendants()) do
+        if d:IsA("TextLabel") and d.Text and d.Text:lower():find("add more") then
+            local btn = d.Parent
+            while btn and not (btn:IsA("TextButton") or btn:IsA("ImageButton")) do
+                btn = btn.Parent
+                if btn == clone then btn = nil; break end
             end
-            for _, d in ipairs(clone:GetDescendants()) do
-                if d:IsA("TextLabel") and d.Text and d.Text:lower():find("add more") then
-                    local btn = d.Parent
-                    while btn and not (btn:IsA("TextButton") or btn:IsA("ImageButton")) do
-                        btn = btn.Parent
-                        if btn == clone then btn = nil; break end
-                    end
-                    noteBtn(btn)
-                elseif d:IsA("TextButton") and d.Text and d.Text:lower():find("add more") then
-                    noteBtn(d)
+            noteBtn(btn)
+        elseif d:IsA("TextButton") and d.Text and d.Text:lower():find("add more") then
+            noteBtn(d)
+        end
+    end
+
+    if #allBtns >= 2 then
+        table.sort(allBtns, function(a, b)
+            local pa, pb = a.AbsolutePosition, b.AbsolutePosition
+            if math.abs(pa.Y - pb.Y) > 5 then return pa.Y < pb.Y end
+            return pa.X < pb.X
+        end)
+        for i, btn in ipairs(allBtns) do
+            local label = LABELS[i] or ("Reaction "..i)
+            local sign = SIGN_TEXTS[i] or label
+            
+            -- Renomme le bouton
+            if btn:IsA("TextButton") and btn.Text and btn.Text ~= "" then
+                btn.Text = label
+            end
+            for _, c in ipairs(btn:GetDescendants()) do
+                if c:IsA("TextLabel") then
+                    c.Text = label
                 end
             end
 
-            for _, btns in pairs(groupsByParent) do
-                if #btns >= 2 then
-                    table.sort(btns, function(a, b)
-                        local pa, pb = a.AbsolutePosition, b.AbsolutePosition
-                        if math.abs(pa.Y - pb.Y) > 5 then return pa.Y < pb.Y end
-                        return pa.X < pb.X
+            -- Gère le clic et l'affichage sur la pancarte
+            btn:SetAttribute("KVSignText", sign)
+            if not btn:GetAttribute("KVReactionWired") then
+                btn:SetAttribute("KVReactionWired", true)
+                btn.AutoButtonColor = false
+                local capturedSign = sign
+                local capturedBtn = btn
+                local capturedLbl = label
+
+                btn.Activated:Connect(function()
+                    pcall(function() require(RS.Controllers.SoundController):PlaySound("Sounds.Sfx.Activated") end)
+                    pcall(function()
+                        local trade = LocalPlayer.PlayerGui:FindFirstChild("KV_FakeTrade")
+                        local innerT = trade and trade:FindFirstChild("TradeLiveTrade")
+                        local mySign = innerT and innerT:FindFirstChild("YourSign")
+                        if not mySign then return end
+                        local target, biggest = nil, 0
+                        for _, d in ipairs(mySign:GetDescendants()) do
+                            if d:IsA("TextLabel") and d.Name:lower() ~= "username" and (d.TextSize or 0) > biggest then
+                                biggest = d.TextSize; target = d
+                            end
+                        end
+                        if target then target.Text = capturedSign end
                     end)
-                    for i, btn in ipairs(btns) do
-                        local label = LABELS[i] or ("Reaction "..i)
-                        local sign  = SIGN_TEXTS[i] or label
-                        -- Set both the button itself and any descendant text labels
-                        if btn:IsA("TextButton") and btn.Text and btn.Text ~= "" then
-                            btn.Text = label
-                        end
-                        for _, c in ipairs(btn:GetDescendants()) do
-                            if c:IsA("TextLabel") then c.Text = label end
-                        end
-                        -- Wire click sound + YourSign text update
-                        btn:SetAttribute("KVSignText", sign)
-                        if not btn:GetAttribute("KVReactionWired") then
-                            btn:SetAttribute("KVReactionWired", true)
-                            btn.AutoButtonColor = false
-                            local capturedSign = sign
-                            local capturedBtn  = btn
-                            local capturedLbl  = label
-                            btn.Activated:Connect(function()
-                                pcall(function()
-                                    require(RS.Controllers.SoundController):PlaySound("Sounds.Sfx.Activated")
-                                end)
-                                pcall(function()
-                                    local trade = LocalPlayer.PlayerGui:FindFirstChild("KV_FakeTrade")
-                                    local innerT = trade and trade:FindFirstChild("TradeLiveTrade")
-                                    local mySign = innerT and innerT:FindFirstChild("YourSign")
-                                    if not mySign then return end
-                                    -- pick the biggest non-username text label
-                                    local target, biggest = nil, 0
-                                    for _, d in ipairs(mySign:GetDescendants()) do
-                                        if d:IsA("TextLabel") and d.Name:lower() ~= "username"
-                                           and (d.TextSize or 0) > biggest then
-                                            biggest = d.TextSize; target = d
-                                        end
-                                    end
-                                    if target then target.Text = capturedSign end
-                                end)
-                            end)
-                            -- Lock the label so game scripts can't overwrite it
-                            if btn:IsA("TextButton") then
-                                btn:GetPropertyChangedSignal("Text"):Connect(function()
-                                    if capturedBtn.Text ~= capturedLbl then capturedBtn.Text = capturedLbl end
-                                end)
-                            end
-                            for _, c in ipairs(btn:GetDescendants()) do
-                                if c:IsA("TextLabel") then
-                                    local cap = c
-                                    c:GetPropertyChangedSignal("Text"):Connect(function()
-                                        if cap.Text ~= capturedLbl then cap.Text = capturedLbl end
-                                    end)
-                                end
-                            end
-                        end
-                    end
-                end
-            end
+                end)
 
-            -- Also: the big center "Last Offer" button — relabel to "Sign" so it
-            -- matches the new compact set, and turn it into a manual Sign trigger.
-            for _, d in ipairs(clone:GetDescendants()) do
-                if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text and d.Text:lower():find("last offer") then
-                    d.Text = "Sign"
+                -- Verrouille le texte pour empêcher le jeu de le remettre sur "Add More"
+                if btn:IsA("TextButton") then
+                    btn:GetPropertyChangedSignal("Text"):Connect(function()
+                        if capturedBtn.Text ~= capturedLbl then capturedBtn.Text = capturedLbl end
+                    end)
+                end
+                for _, c in ipairs(btn:GetDescendants()) do
+                    if c:IsA("TextLabel") then
+                        local cap = c
+                        c:GetPropertyChangedSignal("Text"):Connect(function()
+                            if cap.Text ~= capturedLbl then cap.Text = capturedLbl end
+                        end)
+                    end
                 end
             end
         end
-
+    end
+end
 
         local inner = clone:FindFirstChild("TradeLiveTrade")
         if not inner then clone:Destroy(); SetStatus("Inner frame missing!", Color3.fromRGB(255,80,80), 3); return end
@@ -7667,8 +7658,8 @@ do
         -- and rewrite labels ourselves, then attach click sound + tap animation.
         pcall(function()
             local TS_r = game:GetService("TweenService")
-            local LABELS = {"Add More", "Deal?", "L Trade", "Fair Trade", "Sign", "No Thanks"}
-            local SIGN_TEXTS = {"Add More!", "Deal?", "L Trade", "Fair Trade!", "Sign", "No Thanks!"}
+            local LABELS = {"Add More", "Deal?", "L Trade", "Fair Trade", "Last Offer", "No Thanks"}
+            local SIGN_TEXTS = {"Add More!", "Deal?", "L Trade", "Fair Trade!", "Last Offer", "No Thanks!"}
 
             local function setBtnLabel(btn, label)
                 -- Try the button's own .Text first, then any descendant TextLabel
@@ -7715,64 +7706,62 @@ do
                 end)
             end
 
-            local function scanForReactions()
-                -- Group buttons containing "Add More" text by their parent.
-                -- Scan the WHOLE clone (the buttons can sit outside `inner`).
-                local groupsByParent = {}
-                local function noteBtn(btn)
-                    if not btn then return end
-                    local p = btn.Parent
-                    groupsByParent[p] = groupsByParent[p] or {}
-                    for _, x in ipairs(groupsByParent[p]) do if x == btn then return end end
-                    table.insert(groupsByParent[p], btn)
-                end
-                for _, d in ipairs(clone:GetDescendants()) do
-                    if d:IsA("TextLabel") and d.Text and d.Text:lower():find("add more") then
-                        local btn = d.Parent
-                        while btn and not (btn:IsA("TextButton") or btn:IsA("ImageButton")) do
-                            btn = btn.Parent
-                            if btn == clone then btn = nil; break end
-                        end
-                        noteBtn(btn)
-                    elseif d:IsA("TextButton") and d.Text and d.Text:lower():find("add more") then
-                        noteBtn(d)
-                    end
-                end
+local function scanForReactions()
+    local LABELS = {"Add More", "Deal?", "L Trade", "Fair Trade", "Last Offer", "No Thanks"}
+    local SIGN_TEXTS = {"Add More!", "Deal?", "L Trade", "Fair Trade!", "Last Offer", "No Thanks!"}
 
-                for _, btns in pairs(groupsByParent) do
-                    if #btns >= 2 then
-                        -- sort top-to-bottom, left-to-right by absolute position
-                        table.sort(btns, function(a, b)
-                            local pa, pb = a.AbsolutePosition, b.AbsolutePosition
-                            if math.abs(pa.Y - pb.Y) > 5 then return pa.Y < pb.Y end
-                            return pa.X < pb.X
+    local allBtns = {}
+    local function noteBtn(btn)
+        if not btn then return end
+        for _, x in ipairs(allBtns) do
+            if x == btn then return end
+        end
+        table.insert(allBtns, btn)
+    end
+
+    for _, d in ipairs(clone:GetDescendants()) do
+        if d:IsA("TextLabel") and d.Text and d.Text:lower():find("add more") then
+            local btn = d.Parent
+            while btn and not (btn:IsA("TextButton") or btn:IsA("ImageButton")) do
+                btn = btn.Parent
+                if btn == clone then btn = nil; break end
+            end
+            noteBtn(btn)
+        elseif d:IsA("TextButton") and d.Text and d.Text:lower():find("add more") then
+            noteBtn(d)
+        end
+    end
+
+    if #allBtns >= 2 then
+        table.sort(allBtns, function(a, b)
+            local pa, pb = a.AbsolutePosition, b.AbsolutePosition
+            if math.abs(pa.Y - pb.Y) > 5 then return pa.Y < pb.Y end
+            return pa.X < pb.X
+        end)
+        for i, btn in ipairs(allBtns) do
+            local label = LABELS[i] or ("Reaction "..i)
+            local sign = SIGN_TEXTS[i] or label
+            setBtnLabel(btn, label)
+            
+            if not btn:GetAttribute("KVLabelLocked") then
+                btn:SetAttribute("KVLabelLocked", true)
+                if btn:IsA("TextButton") then
+                    btn:GetPropertyChangedSignal("Text"):Connect(function()
+                        if btn.Text ~= label then btn.Text = label end
+                    end)
+                end
+                for _, c in ipairs(btn:GetDescendants()) do
+                    if c:IsA("TextLabel") then
+                        c:GetPropertyChangedSignal("Text"):Connect(function()
+                            if c.Text ~= label then c.Text = label end
                         end)
-                        for i, btn in ipairs(btns) do
-                            local label = LABELS[i] or ("Reaction "..i)
-                            local sign  = SIGN_TEXTS[i] or label
-                            setBtnLabel(btn, label)
-                            -- Lock the label by attribute, and re-set it whenever something
-                            -- (like the game's scripts) tries to overwrite it back to "Add More".
-                            if not btn:GetAttribute("KVLabelLocked") then
-                                btn:SetAttribute("KVLabelLocked", true)
-                                if btn:IsA("TextButton") then
-                                    btn:GetPropertyChangedSignal("Text"):Connect(function()
-                                        if btn.Text ~= label then btn.Text = label end
-                                    end)
-                                end
-                                for _, c in ipairs(btn:GetDescendants()) do
-                                    if c:IsA("TextLabel") then
-                                        c:GetPropertyChangedSignal("Text"):Connect(function()
-                                            if c.Text ~= label then c.Text = label end
-                                        end)
-                                    end
-                                end
-                            end
-                            wireReactionBtn(btn, sign)
-                        end
                     end
                 end
             end
+            wireReactionBtn(btn, sign)
+        end
+    end
+end
 
             -- A small number of timed scans. Once labeling completes (BOTH
             -- sides — your side AND their side, 12 buttons total), subsequent
